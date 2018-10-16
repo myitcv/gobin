@@ -1,89 +1,19 @@
-<!-- __JSON: go list -json .
-### `{{ filepathBase .Out.ImportPath}}`
+package main
 
-{{.Out.Doc}}
--->
-### `gobin`
+import (
+	"fmt"
+	"io"
+	"text/template"
+)
 
-The gobin command installs/runs main packages.
-<!-- END -->
+func mainUsage(f io.Writer) {
+	t := template.Must(template.New("").Parse(mainHelpTemplate))
+	if err := t.Execute(f, nil); err != nil {
+		fmt.Fprintf(f, "cannot write usage output: %v", err)
+	}
+}
 
-### Installation
-
-<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .readmescript.sh # LONG ONLINE
-
-Clone the `gobin` repo:
-
-```
-{{PrintBlock "clone" -}}
-```
-
-Install:
-
-```
-{{PrintBlock "install" | lineEllipsis 1 -}}
-```
-
-Update your `PATH` and verify we can find `gobin` in our new `PATH`:
-
-```
-{{PrintBlock "fix path" -}}
-```
-
-Use `gobin` as a "test":
-
-```
-{{PrintBlock "use" | lineEllipsis 4 -}}
-```
-
--->
-
-Clone the `gobin` repo:
-
-```
-$ export GO111MODULE=on
-$ git clone --branch initial_cut https://github.com/myitcv/gobin /tmp/gobin
-Cloning into '/tmp/gobin'...
-$ cd /tmp/gobin
-```
-
-Install:
-
-```
-$ go install
-...
-```
-
-Update your `PATH` and verify we can find `gobin` in our new `PATH`:
-
-```
-$ export PATH=$(go env GOPATH)/bin:$PATH
-$ which gobin
-/home/gopher/gopath/bin/gobin
-```
-
-Use `gobin` as a "test":
-
-```
-$ gobin -r github.com/rogpeppe/gohack@master -help
-The gohack command checks out Go module dependencies
-into a directory where they can be edited, and adjusts
-the go.mod file appropriately.
-...
-```
-
-<!-- END -->
-
-### Usage
-
-<!-- __TEMPLATE: sh -c "go run ${DOLLAR}(go list -f '{{.ImportPath}}') -h 2>&1 | head -n -1 || true"
-
-```
-{{.Out -}}
-```
--->
-
-```
+var mainHelpTemplate = `
 The gobin command installs/runs main packages.
 
 Usage:
@@ -144,11 +74,4 @@ To install a main package not part of a go module, use:
 
 	 GO111MODULE=off go get main_pkg
 
-```
-<!-- END -->
-
-### Notes
-
-* This is WIP
-* This project may die, move, etc
-
+`[1:]

@@ -1,0 +1,11 @@
+module github.com/gobin-testrepos/non-main@v1.0.0
+
+-- .mod --
+module github.com/gobin-testrepos/non-main
+-- .info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:57Z"}
+-- go.mod --
+module github.com/gobin-testrepos/non-main
+-- main.go --
+package tools
+

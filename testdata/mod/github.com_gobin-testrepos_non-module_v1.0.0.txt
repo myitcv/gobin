@@ -1,0 +1,14 @@
+module github.com/gobin-testrepos/non-module@v1.0.0
+
+-- .mod --
+module github.com/gobin-testrepos/non-module
+-- .info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:28Z"}
+-- main.go --
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("I am not a module")
+}
