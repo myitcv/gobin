@@ -1,0 +1,12 @@
+env HOME=$WORK/home
+! gobin -p github.com/gobin-testrepos/non-main
+! stdout .+
+stderr '^github.com/gobin-testrepos/non-main@v1.0.0: not a main package$'
+
+cd repo
+! gobin -m -p github.com/gobin-testrepos/non-main
+! stdout .+
+stderr '^github.com/gobin-testrepos/non-main@v1.0.0: not a main package$'
+
+-- repo/go.mod --
+module example.com/repo

@@ -1,0 +1,27 @@
+cd repo
+
+# No GOPATH
+env HOME=$WORK/home
+env GOPATH=
+gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/home/go/bin/simple-main'$'
+! stderr .+
+exists $HOME/go/bin/simple-main
+
+# GOPATH set
+env GOPATH=$WORK/asdf
+gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/asdf/bin/simple-main'$'
+! stderr .+
+exists $WORK/asdf/bin/simple-main
+
+# GOBIN set
+mkdir bin
+env GOBIN=$WORK/repo/bin
+gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/repo/bin/simple-main'$'
+! stderr .+
+exists $WORK/repo/bin/simple-main
+
+-- repo/go.mod --
+module example.com/repo

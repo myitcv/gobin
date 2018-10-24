@@ -1,0 +1,2 @@
+! gobin -help
+stderr 'gobin'
