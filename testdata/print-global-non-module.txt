@@ -1,0 +1,8 @@
+env HOME=$WORK/home
+gobin -p github.com/gobin-testrepos/non-module@v1.0.0
+stdout ^$WORK/home/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module'$'
+! stderr .+
+
+exec $WORK/home/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module
+stdout '^I am not a module$'
+! stderr .+
