@@ -147,6 +147,11 @@ To install a main package not part of a go module, use:
 ```
 <!-- END -->
 
+### Credits
+
+* [mvdan](https://github.com/mvdan)
+* [rogpeppe](https://github.com/rogpeppe)
+
 ### Notes
 
 * This is WIP
