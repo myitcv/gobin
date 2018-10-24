@@ -42,7 +42,7 @@ Clone the `gobin` repo:
 
 ```
 $ export GO111MODULE=on
-$ git clone --branch initial_cut https://github.com/myitcv/gobin /tmp/gobin
+$ git clone https://github.com/myitcv/gobin /tmp/gobin
 Cloning into '/tmp/gobin'...
 $ cd /tmp/gobin
 ```

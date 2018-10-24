@@ -12,7 +12,7 @@ git config --global push.default current
 
 # block: clone
 export GO111MODULE=on
-git clone --branch initial_cut https://github.com/myitcv/gobin /tmp/gobin
+git clone https://github.com/myitcv/gobin /tmp/gobin
 cd /tmp/gobin
 
 # block: install
