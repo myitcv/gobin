@@ -91,7 +91,7 @@ Usage:
 
 The packages argument to gobin is similar to that of the go tool (in module
 mode) with the additional constraint that the list of packages must be main
-packages that are part of Go modules.
+packages.
 
 By default, gobin is said to operate in global mode. If the -m flag is provided
 then it is said to operate in main-module mode, where the path to the main
@@ -137,12 +137,7 @@ The -m flag causes gobin to use the main module (the module containing the
 directory where the gobin command is run). The main module is given by go env
 GOMOD. Without this flag gobin effectively runs as a "global" tool.
 
-It is an error for a non-main package, a package pattern or a main package not
-part of a module to be provided as a package argument.
-
-To install a main package not part of a go module, use:
-
-	 GO111MODULE=off go get main_pkg
+It is an error for a non-main package to be provided as a package argument.
 
 ```
 <!-- END -->

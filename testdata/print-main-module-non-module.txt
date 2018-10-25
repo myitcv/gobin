@@ -1,0 +1,13 @@
+cd repo
+gobin -m -p github.com/gobin-testrepos/non-module
+stdout ^$WORK/repo/.gobincache/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module'$'
+! stderr .+
+
+exec $WORK/repo/.gobincache/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module
+stdout '^I am not a module$'
+! stderr .+
+
+-- repo/go.mod --
+module example.com/repo
+
+require github.com/gobin-testrepos/non-module v1.0.0

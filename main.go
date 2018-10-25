@@ -361,7 +361,6 @@ type arg struct {
 
 var (
 	errNonMain = errors.New("not a main package")
-	errNonMod  = errors.New("main package is not part of a module")
 )
 
 // resolve attempts to resolve a.patt to main packages, using the supplied
@@ -429,12 +428,6 @@ func (a *arg) list(proxy string) error {
 
 		if pkg.Name != "main" {
 			a.resErr = errNonMain
-			return nil
-		}
-
-		// check for existence of a go.mod file
-		if _, err := os.Stat(filepath.Join(pkg.Module.Dir, "go.mod")); err != nil {
-			a.resErr = errNonMod
 			return nil
 		}
 
