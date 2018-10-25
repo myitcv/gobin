@@ -10,13 +10,10 @@ git config --global user.name "$GITHUB_USERNAME"
 git config --global advice.detachedHead false
 git config --global push.default current
 
-unset GOPATH
+# block: get
+GO111MODULE=off go get -u github.com/myitcv/gobin
 
-# these steps are effectively copied from .installation.sh
-export GO111MODULE=on
-git clone https://github.com/myitcv/gobin /tmp/gobin
-cd /tmp/gobin
-go install
+# block: fix path
 export PATH=$(go env GOPATH)/bin:$PATH
 which gobin
 
@@ -26,13 +23,13 @@ gobin github.com/rogpeppe/gohack
 # block: gohack latest
 gobin github.com/rogpeppe/gohack@latest
 
-# block: gohack v1.0.0-alpha.1
-gobin github.com/rogpeppe/gohack@v1.0.0-alpha.1
+# block: gohack v1.0.0-alpha.2
+gobin github.com/rogpeppe/gohack@v1.0.0-alpha.2
 
 # block: gohack print
-gobin -p github.com/rogpeppe/gohack@v1.0.0-alpha.1
+gobin -p github.com/rogpeppe/gohack@v1.0.0-alpha.2
 
 # block: gohack run
-gobin -r github.com/rogpeppe/gohack@v1.0.0-alpha.1 -help
+gobin -r github.com/rogpeppe/gohack@v1.0.0-alpha.2 -help
 assert "$? -eq 2" $LINENO
 
