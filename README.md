@@ -10,7 +10,7 @@ The gobin command installs/runs main packages.
 
 ### Installation
 
-<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .readmescript.sh # LONG ONLINE
+<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .installation.sh # LONG ONLINE
 
 Clone the `gobin` repo:
 
@@ -71,6 +71,82 @@ into a directory where they can be edited, and adjusts
 the go.mod file appropriately.
 ...
 ```
+
+<!-- END -->
+
+### Examples
+
+<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .examples.sh # LONG ONLINE
+
+Globally install `gohack`:
+
+```
+{{PrintBlock "gohack" -}}
+```
+
+Install a specific version of `gohack`:
+
+```
+{{PrintBlock "gohack v1.0.0-alpha.1" -}}
+```
+
+Print the `gobin` cache location of a specific `gohack` version:
+
+```
+{{PrintBlock "gohack print" -}}
+```
+
+Run a specific `gohack` version:
+
+```
+{{PrintBlock "gohack run" -}}
+```
+
+
+-->
+
+Globally install `gohack`:
+
+```
+$ gobin github.com/rogpeppe/gohack
+Installed github.com/rogpeppe/gohack@v0.0.1 to /home/gopher/go/bin/gohack
+```
+
+Install a specific version of `gohack`:
+
+```
+$ gobin github.com/rogpeppe/gohack@v1.0.0-alpha.1
+Installed github.com/rogpeppe/gohack@v1.0.0-alpha.1 to /home/gopher/go/bin/gohack
+```
+
+Print the `gobin` cache location of a specific `gohack` version:
+
+```
+$ gobin -p github.com/rogpeppe/gohack@v1.0.0-alpha.1
+/home/gopher/.cache/gobin/github.com/rogpeppe/gohack/@v/v1.0.0-alpha.1/github.com/rogpeppe/gohack/gohack
+```
+
+Run a specific `gohack` version:
+
+```
+$ gobin -r github.com/rogpeppe/gohack@v1.0.0-alpha.1 -help
+The gohack command checks out Go module dependencies
+into a directory where they can be edited, and adjusts
+the go.mod file appropriately.
+
+Usage:
+
+	gohack <command> [arguments]
+
+The commands are:
+
+	get         start hacking a module
+	undo        stop hacking a module
+	status      print the current hack status of a module
+
+Use "gohack help <command>" for more information about a command.
+```
+
 
 <!-- END -->
 
@@ -141,6 +217,7 @@ It is an error for a non-main package to be provided as a package argument.
 
 ```
 <!-- END -->
+
 
 ### Credits
 
