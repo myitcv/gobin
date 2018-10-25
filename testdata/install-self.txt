@@ -1,0 +1,21 @@
+skip 'Skipping because of https://github.com/golang/go/issues/26241'
+
+env GOPROXY=file://$TESTGOPATH/pkg/mod/cache/download
+env GOBIN=$WORK/install
+env PATH=$GOBIN:$PATH
+
+env GOPATH=$TESTGOPATH
+cd $GOBINMODPATH
+go install
+exists $GOBIN/gobin
+exec which gobin
+stdout ^$GOBIN/gobin'$'
+
+cd $WORK/repo
+exec go mod edit -replace=myitcv.io=$GOBINMODPATH
+exec gobin -m github.com/myitcv/gobin
+
+-- repo/go.mod --
+module mod
+
+require github.com/myitcv/gobin v0.0.0

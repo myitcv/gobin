@@ -280,6 +280,10 @@ func mainerr() error {
 			gobin := filepath.Join(gobinCache, mp.Dir)
 			target := filepath.Join(gobin, path.Base(mp.ImportPath))
 
+			// optimistically remove our target in case we are installing over self
+			// TODO work out what to do for Windows
+			_ = os.Remove(target)
+
 			proxy := "file://" + modDlCache
 
 			var stdout, stderr bytes.Buffer
@@ -320,7 +324,12 @@ func mainerr() error {
 				}
 				defer src.Close()
 				bin := filepath.Join(installBin, path.Base(mp.ImportPath))
-				dest, err := os.Create(bin)
+
+				// optimistically remove our target in case we are installing over self
+				// TODO work out what to do for Windows
+				_ = os.Remove(bin)
+
+				dest, err := os.OpenFile(bin, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0755)
 				if err != nil {
 					return fmt.Errorf("failed to open %v for writing: %v", bin, err)
 				}
