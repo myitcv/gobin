@@ -10,7 +10,14 @@ before_script:
 install: "echo no install step required"
 script:
   - go test ./...
-  - go run github.com/myitcv/gobin -m -r myitcv.io/cmd/mdreplace -long -online -w README.md
+
+    # ensure we can install the "old" way (which will again use vendor)
+  - GO111MODULE=off go install
+
+  - go mod vendor
   - go mod tidy
-  - go list all > /dev/null # https://github.com/golang/go/issues/27868#issuecomment-431413621
-  - bash -c "test -z \"$(git status --porcelain)\" || (git status; git diff; false)"
+
+    # https://github.com/golang/go/issues/27868#issuecomment-431413621
+  - go list all > /dev/null
+  - go run github.com/myitcv/gobin -m -r myitcv.io/cmd/mdreplace -long -online -w README.md
+  - test -z "$(git status --porcelain)" || (git status; git diff; false)
