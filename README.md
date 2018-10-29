@@ -8,20 +8,12 @@
 The gobin command installs/runs main packages.
 <!-- END -->
 
+<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .readme.sh # LONG ONLINE
+
 ### Installation
 
-<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .installation.sh # LONG ONLINE
-
-Clone the `gobin` repo:
-
 ```
-{{PrintBlock "clone" -}}
-```
-
-Install:
-
-```
-{{PrintBlock "install" | lineEllipsis 1 -}}
+{{PrintBlock "get" -}}
 ```
 
 Update your `PATH` and verify we can find `gobin` in our new `PATH`:
@@ -30,53 +22,7 @@ Update your `PATH` and verify we can find `gobin` in our new `PATH`:
 {{PrintBlock "fix path" -}}
 ```
 
-Use `gobin` as a "test":
-
-```
-{{PrintBlock "use" | lineEllipsis 4 -}}
-```
-
--->
-
-Clone the `gobin` repo:
-
-```
-$ export GO111MODULE=on
-$ git clone https://github.com/myitcv/gobin /tmp/gobin
-Cloning into '/tmp/gobin'...
-$ cd /tmp/gobin
-```
-
-Install:
-
-```
-$ go install
-...
-```
-
-Update your `PATH` and verify we can find `gobin` in our new `PATH`:
-
-```
-$ export PATH=$(go env GOPATH)/bin:$PATH
-$ which gobin
-/home/gopher/gopath/bin/gobin
-```
-
-Use `gobin` as a "test":
-
-```
-$ gobin -r github.com/rogpeppe/gohack@master -help
-The gohack command checks out Go module dependencies
-into a directory where they can be edited, and adjusts
-the go.mod file appropriately.
-...
-```
-
-<!-- END -->
-
 ### Examples
-
-<!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .examples.sh # LONG ONLINE
 
 Globally install `gohack`:
 
@@ -87,7 +33,7 @@ Globally install `gohack`:
 Install a specific version of `gohack`:
 
 ```
-{{PrintBlock "gohack v1.0.0-alpha.1" -}}
+{{PrintBlock "gohack v1.0.0-alpha.2" -}}
 ```
 
 Print the `gobin` cache location of a specific `gohack` version:
@@ -102,34 +48,49 @@ Run a specific `gohack` version:
 {{PrintBlock "gohack run" -}}
 ```
 
-
 -->
+
+### Installation
+
+```
+$ GO111MODULE=off go get -u github.com/myitcv/gobin
+```
+
+Update your `PATH` and verify we can find `gobin` in our new `PATH`:
+
+```
+$ export PATH=$(go env GOPATH)/bin:$PATH
+$ which gobin
+/home/gopher/gopath/bin/gobin
+```
+
+### Examples
 
 Globally install `gohack`:
 
 ```
 $ gobin github.com/rogpeppe/gohack
-Installed github.com/rogpeppe/gohack@v0.0.1 to /home/gopher/go/bin/gohack
+Installed github.com/rogpeppe/gohack@v0.0.1 to /home/gopher/gopath/bin/gohack
 ```
 
 Install a specific version of `gohack`:
 
 ```
-$ gobin github.com/rogpeppe/gohack@v1.0.0-alpha.1
-Installed github.com/rogpeppe/gohack@v1.0.0-alpha.1 to /home/gopher/go/bin/gohack
+$ gobin github.com/rogpeppe/gohack@v1.0.0-alpha.2
+Installed github.com/rogpeppe/gohack@v1.0.0-alpha.2 to /home/gopher/gopath/bin/gohack
 ```
 
 Print the `gobin` cache location of a specific `gohack` version:
 
 ```
-$ gobin -p github.com/rogpeppe/gohack@v1.0.0-alpha.1
-/home/gopher/.cache/gobin/github.com/rogpeppe/gohack/@v/v1.0.0-alpha.1/github.com/rogpeppe/gohack/gohack
+$ gobin -p github.com/rogpeppe/gohack@v1.0.0-alpha.2
+/home/gopher/.cache/gobin/github.com/rogpeppe/gohack/@v/v1.0.0-alpha.2/github.com/rogpeppe/gohack/gohack
 ```
 
 Run a specific `gohack` version:
 
 ```
-$ gobin -r github.com/rogpeppe/gohack@v1.0.0-alpha.1 -help
+$ gobin -r github.com/rogpeppe/gohack@v1.0.0-alpha.2 -help
 The gohack command checks out Go module dependencies
 into a directory where they can be edited, and adjusts
 the go.mod file appropriately.
@@ -146,7 +107,6 @@ The commands are:
 
 Use "gohack help <command>" for more information about a command.
 ```
-
 
 <!-- END -->
 
