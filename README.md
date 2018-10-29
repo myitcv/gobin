@@ -186,6 +186,6 @@ It is an error for a non-main package to be provided as a package argument.
 
 ### Notes
 
-* This is WIP
-* This project may die, move, etc
+In the context of https://github.com/golang/go/issues/24250 and https://github.com/golang/go/issues/27653, this is a WIP
+experiment. This project may die, move, etc at any time, until further notice.
 
