@@ -39,7 +39,7 @@ var (
 )
 
 func main() {
-	os.Exit(mainint())
+	os.Exit(main1())
 }
 
 // TODO
@@ -47,7 +47,7 @@ func main() {
 // 1. Work out whether we want to support ... patterns
 // 2. Make local step concurrent?
 
-func mainint() int {
+func main1() int {
 	if err := mainerr(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

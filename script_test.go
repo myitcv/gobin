@@ -17,7 +17,7 @@ var (
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(gobinMain{m}, map[string]func() int{
-		"gobin": mainint,
+		"gobin": main1,
 	}))
 }
 
