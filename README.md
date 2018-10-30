@@ -2,10 +2,16 @@
 ### `{{ filepathBase .Out.ImportPath}}`
 
 {{.Out.Doc}}
+
+See the [FAQ](https://github.com/myitcv/gobin/wiki/FAQ) for more details.
+
 -->
 ### `gobin`
 
 The gobin command installs/runs main packages.
+
+See the [FAQ](https://github.com/myitcv/gobin/wiki/FAQ) for more details.
+
 <!-- END -->
 
 <!-- __JSON: go run github.com/myitcv/gobin -m -r myitcv.io/cmd/egrunner .readme.sh # LONG ONLINE
@@ -15,6 +21,8 @@ The gobin command installs/runs main packages.
 ```
 {{PrintBlock "get" -}}
 ```
+
+or download a binary from [the latest release](https://github.com/myitcv/gobin/releases).
 
 Update your `PATH` and verify we can find `gobin` in our new `PATH`:
 
@@ -55,6 +63,8 @@ Run a specific `gohack` version:
 ```
 $ GO111MODULE=off go get -u github.com/myitcv/gobin
 ```
+
+or download a binary from [the latest release](https://github.com/myitcv/gobin/releases).
 
 Update your `PATH` and verify we can find `gobin` in our new `PATH`:
 
