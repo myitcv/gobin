@@ -286,7 +286,7 @@ func mainerr() error {
 
 			installCmd := exec.Command("go", "install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
-			installCmd.Env = append(os.Environ(), "GOBIN="+gobin, "GOPROXY="+proxy)
+			installCmd.Env = append(os.Environ(), "GO111MODULE=on", "GOBIN="+gobin, "GOPROXY="+proxy)
 			installCmd.Stdout = &stdout
 			installCmd.Stderr = &stderr
 
@@ -380,9 +380,9 @@ var (
 // version this is returned. Otherwise the main packages matched by the
 // packages are populated into a.mainPkgs
 func (a *arg) get(proxy string) error {
-	var env []string
+	env := append(os.Environ(), "GO111MODULE=on")
 	if proxy != "" {
-		env = append(os.Environ(), proxy)
+		env = append(env, proxy)
 	}
 
 	getCmd := exec.Command("go", "get", "-d", a.patt)
@@ -401,9 +401,9 @@ func (a *arg) get(proxy string) error {
 }
 
 func (a *arg) list(proxy string) error {
-	var env []string
+	env := append(os.Environ(), "GO111MODULE=on")
 	if proxy != "" {
-		env = append(os.Environ(), proxy)
+		env = append(env, proxy)
 	}
 
 	var stdout, stderr bytes.Buffer

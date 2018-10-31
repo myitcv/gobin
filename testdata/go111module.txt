@@ -1,0 +1,11 @@
+# Verify that gobin behaves correctly irrespective of the user's setting of GO111MODULE
+
+env HOME=$WORK/home
+env GO111MODULE=off
+gobin -p github.com/gobin-testrepos/simple-main@v1.0.0
+stdout ^$WORK/home/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main'$'
+! stderr .+
+
+exec $WORK/home/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
+stdout '^Simple module-based main v1.0.0$'
+! stderr .+
