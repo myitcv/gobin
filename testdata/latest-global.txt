@@ -1,0 +1,13 @@
+env HOME=$WORK/home
+
+gobin github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/gopath/bin/simple-main'$'
+! stderr .+
+
+gobin github.com/gobin-testrepos/simple-main@latest
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/gopath/bin/simple-main'$'
+! stderr .+
+
+gobin -u github.com/gobin-testrepos/simple-main@latest
+stdout '^Installed github.com/gobin-testrepos/simple-main@v1.1.0 to '$WORK/gopath/bin/simple-main'$'
+! stderr .+

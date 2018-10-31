@@ -19,5 +19,5 @@ script:
 
     # https://github.com/golang/go/issues/27868#issuecomment-431413621
   - go list all > /dev/null
-  - go run github.com/myitcv/gobin -m -r myitcv.io/cmd/mdreplace -long -online -w README.md
+  - go run github.com/myitcv/gobin -m -run myitcv.io/cmd/mdreplace -long -online -w README.md
   - test -z "$(git status --porcelain)" || (git status; git diff; false)

@@ -13,6 +13,12 @@ git config --global push.default current
 # block: get
 GO111MODULE=off go get -u github.com/myitcv/gobin
 
+# actually under the hood we want to install the "current" local version
+# else we won't be able to take advantage of changes until they are merged
+pushd /self > /dev/null
+GOBIN=$GOPATH/bin GOPATH=/gopath go install
+popd > /dev/null
+
 # block: fix path
 export PATH=$(go env GOPATH)/bin:$PATH
 which gobin
@@ -36,7 +42,7 @@ gobin github.com/rogpeppe/gohack@v1.0.0
 gobin -p github.com/rogpeppe/gohack@v1.0.0
 
 # block: gohack run
-gobin -r github.com/rogpeppe/gohack@v1.0.0 -help
+gobin -run github.com/rogpeppe/gohack@v1.0.0 -help
 assert "$? -eq 2" $LINENO
 
 # ====================================
@@ -69,7 +75,7 @@ gobin -m -p golang.org/x/tools/cmd/stringer@v0.0.0-20181102223251-96e9e165b75e
 gobin -m -p golang.org/x/tools/cmd/stringer
 
 # block: stringer help
-gobin -m -r golang.org/x/tools/cmd/stringer -help
+gobin -m -run golang.org/x/tools/cmd/stringer -help
 assert "$? -eq 2" $LINENO
 
 cat <<EOD | gofmt > main.go
@@ -77,7 +83,7 @@ package main
 
 import "fmt"
 
-//go:generate gobin -m -r golang.org/x/tools/cmd/stringer -type=Pill
+//go:generate gobin -m -run golang.org/x/tools/cmd/stringer -type=Pill
 
 type Pill int
 
