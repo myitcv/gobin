@@ -49,5 +49,5 @@ honnef.co/go/js/util v0.0.0-20150216223935-96b8dd9d1621/go.mod h1:WrAIh8rWfzvMdL
 honnef.co/go/js/xhr v0.0.0-20150307031022-00e3346113ae/go.mod h1:QwoYXdHZpuR080H32s5jqyk7zh/k/U9bDFg2g8OMmOM=
 mvdan.cc/sh v2.5.0+incompatible h1:JNM6l18iQFGZl0dK2n/7Z85sNaFq9zSl3qooNNyl+qA=
 mvdan.cc/sh v2.5.0+incompatible/go.mod h1:IeeQbZq+x2SUGBensq/jge5lLQbS3XT2ktyp3wrt4x8=
-myitcv.io v0.0.0-20181024170518-69843ea77cfd h1:wJZBNGj4rAqFC7Uvj8qeJ8rBKfhbvj47g/0wkN5R0Ew=
-myitcv.io v0.0.0-20181024170518-69843ea77cfd/go.mod h1:0yVf2bHw6qSFxyjj1hJ+yA68GjlMIr6FZcQgBG9Cqq0=
+myitcv.io v0.0.0-20181102104800-990e6f9524a1 h1:e6S5o5jz4i6AbFhDb8WW9mwtfWut09YuDq3hQwlv/ds=
+myitcv.io v0.0.0-20181102104800-990e6f9524a1/go.mod h1:V89gPeZMtE3hxqrnPEFQpHq6vPgvz6mt/KRlabs2qT4=
