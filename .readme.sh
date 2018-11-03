@@ -17,6 +17,9 @@ GO111MODULE=off go get -u github.com/myitcv/gobin
 export PATH=$(go env GOPATH)/bin:$PATH
 which gobin
 
+# behind the scenes fix the version of gohack we install
+gobin github.com/rogpeppe/gohack@v0.0.1
+
 # block: gohack
 gobin github.com/rogpeppe/gohack
 
