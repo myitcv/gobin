@@ -1,0 +1,6 @@
+env HOME=$WORK/home
+gobin -d github.com/gobin-testrepos/simple-main@v1.0.0
+! stdout .+
+! stderr .+
+exists $WORK/home/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
+

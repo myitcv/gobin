@@ -29,11 +29,12 @@ const (
 var (
 	exitCode = 0
 
-	fMainMod = flag.Bool("m", false, "use main module")
-	fRun     = flag.Bool("r", false, "run main package")
-	fPrint   = flag.Bool("p", false, "print gobin cache location for main packages")
-	fGet     = flag.Bool("g", false, "force gobin to check the network for main packages")
-	fNoNet   = flag.Bool("n", false, "prevent network access")
+	fMainMod  = flag.Bool("m", false, "use resolve dependencies via the main module (as given by go env GOMOD)")
+	fRun      = flag.Bool("run", false, "run the provided main package")
+	fPrint    = flag.Bool("p", false, "print gobin install cache location for main packages")
+	fDownload = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
+	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
+	fNoNet    = flag.Bool("nonet", false, "prevent network access")
 
 	fDebug = flag.Bool("debug", false, "print debug information")
 )
@@ -65,7 +66,7 @@ func mainerr() error {
 		return fmt.Errorf("the -p and -r flags are mutually exclusive")
 	}
 
-	if *fGet && *fNoNet {
+	if *fUpgrade && *fNoNet {
 		return fmt.Errorf("the -n and -g flags are mutually exclusive")
 	}
 
@@ -174,16 +175,9 @@ func mainerr() error {
 		}
 	}
 
-	if !*fGet {
+	if !*fUpgrade {
 		// local resolution step
 		for _, pkg := range allPkgs {
-			if !*fNoNet && pkg.verPatt == "latest" {
-				// in case we are allowed to hit the network, that will have the
-				// definitive answer on latest
-				netPkgs = append(netPkgs, pkg)
-				continue
-			}
-
 			proxy := "GOPROXY=file://" + modDlCache
 
 			useModCurr := *fMainMod && pkg.verPatt == ""
@@ -305,6 +299,8 @@ func mainerr() error {
 			debugf("ran [%v] in [%v] with [GOBIN=%v, GOPROXY=%v] in %v\n", strings.Join(installCmd.Args, " "), pkg.wd, gobin, proxy, time.Now().Sub(start))
 
 			switch {
+			case *fDownload:
+				// noop
 			case *fPrint:
 				fmt.Println(target)
 			case *fRun:
