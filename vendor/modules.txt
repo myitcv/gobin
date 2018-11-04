@@ -34,8 +34,9 @@ gopkg.in/errgo.v2/fmt/errors
 gopkg.in/errgo.v2/errors
 # mvdan.cc/sh v2.5.0+incompatible
 mvdan.cc/sh/syntax
-# myitcv.io v0.0.0-20181024170518-69843ea77cfd
+# myitcv.io v0.0.0-20181102104800-990e6f9524a1
 myitcv.io/cmd/egrunner
 myitcv.io/cmd/githubcli
 myitcv.io/cmd/mdreplace
+myitcv.io/cmd/internal/bindmnt
 myitcv.io/cmd/mdreplace/internal/itemtype
