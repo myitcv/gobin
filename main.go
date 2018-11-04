@@ -282,7 +282,9 @@ func mainerr() error {
 
 			// optimistically remove our target in case we are installing over self
 			// TODO work out what to do for Windows
-			_ = os.Remove(target)
+			if mp.ImportPath == "github.com/myitcv/gobin" {
+				_ = os.Remove(target)
+			}
 
 			proxy := "file://" + modDlCache
 
@@ -290,7 +292,7 @@ func mainerr() error {
 
 			installCmd := exec.Command("go", "install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
-			installCmd.Env = append(os.Environ(), "GOBIN="+gobin, "GOPROXY"+proxy)
+			installCmd.Env = append(os.Environ(), "GOBIN="+gobin, "GOPROXY="+proxy)
 			installCmd.Stdout = &stdout
 			installCmd.Stderr = &stderr
 
@@ -325,11 +327,16 @@ func mainerr() error {
 				defer src.Close()
 				bin := filepath.Join(installBin, path.Base(mp.ImportPath))
 
+				openMode := os.O_CREATE | os.O_WRONLY
+
 				// optimistically remove our target in case we are installing over self
 				// TODO work out what to do for Windows
-				_ = os.Remove(bin)
+				if mp.ImportPath == "github.com/myitcv/gobin" {
+					_ = os.Remove(bin)
+					openMode = openMode | os.O_EXCL
+				}
 
-				dest, err := os.OpenFile(bin, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0755)
+				dest, err := os.OpenFile(bin, openMode, 0755)
 				if err != nil {
 					return fmt.Errorf("failed to open %v for writing: %v", bin, err)
 				}
@@ -382,7 +389,7 @@ func (a *arg) get(proxy string) error {
 		env = append(os.Environ(), proxy)
 	}
 
-	getCmd := exec.Command("go", "get", a.patt)
+	getCmd := exec.Command("go", "get", "-d", a.patt)
 	getCmd.Dir = a.wd
 	getCmd.Env = env
 
