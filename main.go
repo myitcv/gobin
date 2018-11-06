@@ -29,7 +29,8 @@ const (
 var (
 	exitCode = 0
 
-	fMainMod  = flag.Bool("m", false, "use resolve dependencies via the main module (as given by go env GOMOD)")
+	fMainMod  = flag.Bool("m", false, "resolve dependencies via the main module (as given by go env GOMOD)")
+	fMod      = flag.String("mod", "", "provide additional control over updating and use of go.mod")
 	fRun      = flag.Bool("run", false, "run the provided main package")
 	fPrint    = flag.Bool("p", false, "print gobin install cache location for main packages")
 	fVersion  = flag.Bool("v", false, "print the module path and version for main packages")
@@ -80,6 +81,15 @@ func mainerr() error {
 		if comm > 1 {
 			return fmt.Errorf("the -run, -p, -v and -d flags are mutually exclusive")
 		}
+	}
+
+	if *fMod != "" {
+		switch *fMod {
+		case "readonly", "vendor":
+		default:
+			return fmt.Errorf("-mod has invalid value %q", *fMod)
+		}
+		*fMainMod = true
 	}
 
 	if *fUpgrade && *fNoNet {
@@ -209,6 +219,11 @@ func mainerr() error {
 				}
 			}
 
+			// This is the point at which fMod == readonly
+			// will fail. At the moment we return a rather gross
+			// error... probably can't assume that any error
+			// here is as a result of readonly... but we can
+			// likely improve the error message (somehow).
 			if err := pkg.list(proxy); err != nil {
 				if !useModCurr {
 					return err
@@ -302,7 +317,7 @@ func mainerr() error {
 
 			installCmd := exec.Command("go", "install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
-			installCmd.Env = append(os.Environ(), "GO111MODULE=on", "GOBIN="+gobin, "GOPROXY="+proxy)
+			installCmd.Env = append(buildEnv("GOPROXY="+proxy), "GOBIN="+gobin)
 			installCmd.Stdout = &stdout
 
 			if err := run(installCmd); err != nil {
@@ -393,10 +408,7 @@ var (
 // version this is returned. Otherwise the main packages matched by the
 // packages are populated into a.mainPkgs
 func (a *arg) get(proxy string) error {
-	env := append(os.Environ(), "GO111MODULE=on")
-	if proxy != "" {
-		env = append(env, proxy)
-	}
+	env := buildEnv(proxy)
 
 	getCmd := exec.Command("go", "get", "-d", a.patt)
 	getCmd.Dir = a.wd
@@ -410,10 +422,7 @@ func (a *arg) get(proxy string) error {
 }
 
 func (a *arg) list(proxy string) error {
-	env := append(os.Environ(), "GO111MODULE=on")
-	if proxy != "" {
-		env = append(env, proxy)
-	}
+	env := buildEnv(proxy)
 
 	var stdout bytes.Buffer
 
@@ -451,6 +460,21 @@ func (a *arg) list(proxy string) error {
 	}
 
 	return nil
+}
+
+// buildEnv builds the correct environment for running go commands from gobin.
+// proxy is expected to be empty or take the form "GOPROXY=X". If it is non
+// empty it will be added to the environment.
+func buildEnv(proxy string) []string {
+	env := append(os.Environ(), "GO111MODULE=on")
+	if proxy != "" {
+		env = append(env, proxy)
+	}
+	goflags := os.Getenv("GOFLAGS")
+	if *fMainMod && *fMod != "" {
+		goflags += " -mod=" + *fMod
+	}
+	return append(env, "GOFLAGS="+goflags)
 }
 
 func run(cmd *exec.Cmd) error {

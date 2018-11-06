@@ -248,6 +248,13 @@ By default, gobin will use the main package's module to resolve its
 dependencies, unless the -m flag is specified, in which case dependencies will
 be resolved using the main module (as given by go env GOMOD).
 
+The -mod flag provides additional control over updating and use of go.mod when
+using the main module to resolve dependencies. If the -mod flag is provided it
+implies -m. With -mod=readonly, gobin is disallowed from any implicit updating
+of go.mod. Instead, it fails when any changes to go.mod are needed. With
+-mod=vendor, gobin assumes that the vendor directory holds the correct copies
+of dependencies and ignores the dependency descriptions in go.mod
+
 This means that gobin $package@v1.2.3 is a repeatable way to install an exact
 version of a binary (assuming it has an associated go.mod file).
 
