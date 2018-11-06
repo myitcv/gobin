@@ -1,0 +1,5 @@
+# Exercise the -v flag
+env HOME=$WORK/home
+gobin -v github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^github.com/gobin-testrepos/simple-main v1.0.0$'
+! stderr .+

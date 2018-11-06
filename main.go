@@ -32,11 +32,11 @@ var (
 	fMainMod  = flag.Bool("m", false, "use resolve dependencies via the main module (as given by go env GOMOD)")
 	fRun      = flag.Bool("run", false, "run the provided main package")
 	fPrint    = flag.Bool("p", false, "print gobin install cache location for main packages")
+	fVersion  = flag.Bool("v", false, "print the module path and version for main packages")
 	fDownload = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
 	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
 	fNoNet    = flag.Bool("nonet", false, "prevent network access")
-
-	fDebug = flag.Bool("debug", false, "print debug information")
+	fDebug    = flag.Bool("debug", false, "print debug information")
 )
 
 func main() {
@@ -62,8 +62,24 @@ func mainerr() error {
 	}
 	flag.Parse()
 
-	if *fRun && *fPrint {
-		return fmt.Errorf("the -p and -r flags are mutually exclusive")
+	// check exclusivity of certain flags
+	{
+		comm := 0
+		if *fRun {
+			comm += 1
+		}
+		if *fPrint {
+			comm += 1
+		}
+		if *fDownload {
+			comm += 1
+		}
+		if *fVersion {
+			comm += 1
+		}
+		if comm > 1 {
+			return fmt.Errorf("the -run, -p, -v and -d flags are mutually exclusive")
+		}
 	}
 
 	if *fUpgrade && *fNoNet {
@@ -298,6 +314,8 @@ func mainerr() error {
 				// noop
 			case *fPrint:
 				fmt.Println(target)
+			case *fVersion:
+				fmt.Printf("%v %v\n", mp.Module.Path, mp.Module.Version)
 			case *fRun:
 				argv := append([]string{target}, runArgs...)
 				if err := syscall.Exec(argv[0], argv, os.Environ()); err != nil {
