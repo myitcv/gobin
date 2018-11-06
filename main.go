@@ -252,6 +252,7 @@ func mainerr() error {
 		for _, mp := range pkg.mainPkgs {
 			// calculate the relative install directory from main package import path
 			// and the containing module's version
+			var mainrel string
 			{
 				emp, err := module.EncodePath(filepath.FromSlash(mp.Module.Path))
 				if err != nil {
@@ -267,11 +268,10 @@ func mainerr() error {
 				if err != nil {
 					return fmt.Errorf("failed to encode package relative path %v: %v", mp.ImportPath, err)
 				}
-				md = filepath.Join(md, epp)
-				mp.Dir = md
+				mainrel = filepath.Join(md, epp)
 			}
 
-			gobin := filepath.Join(gobinCache, mp.Dir)
+			gobin := filepath.Join(gobinCache, mainrel)
 			target := filepath.Join(gobin, path.Base(mp.ImportPath))
 
 			// optimistically remove our target in case we are installing over self
@@ -282,21 +282,16 @@ func mainerr() error {
 
 			proxy := "file://" + modDlCache
 
-			var stdout, stderr bytes.Buffer
+			var stdout bytes.Buffer
 
 			installCmd := exec.Command("go", "install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
 			installCmd.Env = append(os.Environ(), "GO111MODULE=on", "GOBIN="+gobin, "GOPROXY="+proxy)
 			installCmd.Stdout = &stdout
-			installCmd.Stderr = &stderr
 
-			start := time.Now()
-
-			if err := installCmd.Run(); err != nil {
-				return fmt.Errorf("failed to %v: %v\n%s", strings.Join(installCmd.Args, " "), err, stderr.String())
+			if err := run(installCmd); err != nil {
+				return err
 			}
-
-			debugf("ran [%v] in [%v] with [GOBIN=%v, GOPROXY=%v] in %v\n", strings.Join(installCmd.Args, " "), pkg.wd, gobin, proxy, time.Now().Sub(start))
 
 			switch {
 			case *fDownload:
@@ -389,13 +384,9 @@ func (a *arg) get(proxy string) error {
 	getCmd.Dir = a.wd
 	getCmd.Env = env
 
-	start := time.Now()
-
-	if out, err := getCmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to %v: %v\n%s", strings.Join(getCmd.Args, " "), err, out)
+	if err := run(getCmd); err != nil {
+		return err
 	}
-
-	debugf("ran [%v] in [%v] with [%v] in %v\n", strings.Join(getCmd.Args, " "), a.wd, proxy, time.Now().Sub(start))
 
 	return nil
 }
@@ -406,21 +397,16 @@ func (a *arg) list(proxy string) error {
 		env = append(env, proxy)
 	}
 
-	var stdout, stderr bytes.Buffer
+	var stdout bytes.Buffer
 
 	listCmd := exec.Command("go", "list", "-json", a.pkgPatt)
 	listCmd.Dir = a.wd
 	listCmd.Stdout = &stdout
-	listCmd.Stderr = &stderr
 	listCmd.Env = env
 
-	start := time.Now()
-
-	if err := listCmd.Run(); err != nil {
-		return fmt.Errorf("failed to %v: %v\n%s", strings.Join(listCmd.Args, " "), err, stderr.String())
+	if err := run(listCmd); err != nil {
+		return err
 	}
-
-	debugf("ran [%v] in [%v] with [%v] in %v\n", strings.Join(listCmd.Args, " "), a.wd, proxy, time.Now().Sub(start))
 
 	dec := json.NewDecoder(&stdout)
 
@@ -449,8 +435,32 @@ func (a *arg) list(proxy string) error {
 	return nil
 }
 
-func debugf(format string, args ...interface{}) {
-	if debug || *fDebug {
-		fmt.Fprintf(os.Stderr, format, args...)
+func run(cmd *exec.Cmd) error {
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	start := time.Now()
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run %v: %v\n%s", strings.Join(cmd.Args, " "), err, stderr.String())
 	}
+
+	end := time.Now()
+
+	if !debug && !*fDebug {
+		return nil
+	}
+
+	env := cmd.Env
+	if env == nil {
+		env = os.Environ()
+	}
+	var goenv []string
+	for _, v := range env {
+		if strings.HasPrefix(v, "GO") {
+			goenv = append(goenv, v)
+		}
+	}
+	fmt.Fprintf(os.Stderr, "+ cd %v; %v %v # took %v\n%s", cmd.Dir, strings.Join(goenv, " "), strings.Join(cmd.Args, " "), end.Sub(start), stderr.String())
+
+	return nil
 }
