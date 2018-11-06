@@ -1,0 +1,12 @@
+# Check that -mod=readonly works.
+#
+# TODO: add a test that verifies a pre-existing value in GOFLAGS is preserved
+# and indeed appended to.
+
+cd repo
+! gobin -mod=readonly github.com/gobin-testrepos/simple-main
+! stdout .+
+stderr 'import lookup disabled by -mod=readonly'
+
+-- repo/go.mod --
+module example.com/repo
