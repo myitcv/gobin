@@ -17,7 +17,7 @@ var mainHelpTemplate = `
 The gobin command installs/runs main packages.
 
 Usage:
-	gobin [-m] [-run|-p|-d] [-u|-nonet] packages [run arguments...]
+	gobin [-m] [-run|-p|-v|-d] [-u|-nonet] packages [run arguments...]
 
 The gobin command builds, installs, and possibly runs an executable binary for
 each of the named main packages.
@@ -61,10 +61,13 @@ will be passed to the main package as command line arguments.
 The -p flag prints the gobin cache path for each of the packages' executables
 once versions have been resolved.
 
+The -v flag prints the module path and version for each of the packages. Each
+line in the output has two space-separated fields: a module path and a version.
+
 The -d flag instructs gobin to stop after installing the packages to the gobin
 cache; that is, it instructs gobin not to install, run or print the packages.
 
-The -run, -p and -d flags are mutually exclusive.
+The -run, -p, -v and -d flags are mutually exclusive.
 
 It is an error for a non-main package to be provided as a package argument.
 
