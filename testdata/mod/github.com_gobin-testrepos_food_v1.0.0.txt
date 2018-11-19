@@ -1,0 +1,10 @@
+-- .mod --
+module github.com/gobin-testrepos/food
+-- .info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+-- go.mod --
+module github.com/gobin-testrepos/food
+-- main.go --
+package food
+
+const MainCourse = "fish"

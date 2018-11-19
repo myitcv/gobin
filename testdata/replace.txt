@@ -1,0 +1,8 @@
+# Verify that replace statements in the main package's module are
+# applied when the main package is installed (note, this is not
+# the expectation with -m)
+
+env HOME=$WORK/home
+gobin -run github.com/gobin-testrepos/simple-main@v1.0.0
+stdout '^Simple module-based main v1.0.0$'
+stdout '^Today we will eat chips$'
