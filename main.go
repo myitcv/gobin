@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -24,6 +25,8 @@ import (
 
 const (
 	debug = false
+
+	tempModule = "temporary.com/gobin"
 )
 
 var (
@@ -191,7 +194,7 @@ func mainerr() error {
 					return fmt.Errorf("failed to create temp dir: %v", err)
 				}
 				tmpDirs = append(tmpDirs, td)
-				if err := ioutil.WriteFile(filepath.Join(td, "go.mod"), []byte("module gobin\n"), 0644); err != nil {
+				if err := ioutil.WriteFile(filepath.Join(td, "go.mod"), []byte("module "+tempModule+"\n"), 0644); err != nil {
 					return fmt.Errorf("failed to initialise temp Go module: %v", err)
 				}
 				a.wd = td
@@ -385,6 +388,7 @@ type listPkg struct {
 		Path    string
 		Dir     string
 		Version string
+		GoMod   string
 	}
 }
 
@@ -400,7 +404,8 @@ type arg struct {
 }
 
 var (
-	errNonMain = errors.New("not a main package")
+	errNonMain      = errors.New("not a main package")
+	errMultiModules = errors.New("cannot (yet) install main packages from a pattern that spans multiple modules")
 )
 
 // resolve attempts to resolve a.patt to main packages, using the supplied
@@ -440,6 +445,12 @@ func (a *arg) list(proxy string) error {
 	// TODO if/when we support patterns including ... we will need to change the
 	// semantics of a.resErr and the version resolution below
 
+	// TODO for now we simply throw an error in case the package pattern
+	// provided cross module boundaries. Because in global mode, we would need a
+	// temp module per module for things to work cleanly (else we might have to
+	// handle conflicting replace statements)
+	seenMods := make(map[string]bool)
+
 	for {
 		pkg := new(listPkg)
 		if err := dec.Decode(pkg); err != nil {
@@ -454,6 +465,80 @@ func (a *arg) list(proxy string) error {
 		if pkg.Name != "main" {
 			a.resErr = errNonMain
 			return nil
+		}
+
+		seen := seenMods[pkg.Module.Path]
+		if !seen && len(seenMods) > 0 {
+			a.resErr = errMultiModules
+			return nil
+		}
+
+		seenMods[pkg.Module.Path] = true
+
+		// If we are not in main-module mode (i.e. -m is not provided), then we
+		// are working in a temporary module. Any replacements in
+		// $(mp.Module.GoMod) need to be applied to $(pkg.wd)/go.mod. So the
+		// simplest thing to do is copy the main package's module's go.mod over
+		// the top of the temporary module's go.mod and then adjust the module
+		// line and add the single requirement that we now have resolved.
+		if !seen && !*fMainMod {
+			srcPath := pkg.Module.GoMod
+			src, err := os.Open(srcPath)
+			if err != nil {
+				return fmt.Errorf("failed to open src %v: %v", srcPath, err)
+			}
+
+			destPath := filepath.Join(a.wd, "go.mod")
+			dest, err := os.Create(destPath)
+			if err != nil {
+				return fmt.Errorf("failed to create dest %v: %v", destPath, err)
+			}
+
+			_, err = io.Copy(dest, src)
+			src.Close()
+			if err != nil {
+				return fmt.Errorf("failed to copy %v to %v: %v", srcPath, destPath, err)
+			}
+			if err := dest.Close(); err != nil {
+				return fmt.Errorf("failed to close dest file %v: %v", destPath, err)
+			}
+
+			// work around https://github.com/golang/go/issues/28820 by reading the go.mod
+			// and doing a string replace on the module line. Otherwise we could do this
+			// in the go mod edit below.
+			{
+				modreg := regexp.MustCompile(`\A\s*module\s+"?` + regexp.QuoteMeta(pkg.Module.Path) + `"?.*\n`)
+				fpath := filepath.Join(a.wd, "go.mod")
+				fbyts, err := ioutil.ReadFile(fpath)
+				if err != nil {
+					return fmt.Errorf("failed to read %v: %v", fpath, err)
+				}
+				fstr := string(fbyts)
+				fstr = modreg.ReplaceAllString(fstr, "module "+tempModule+"\n")
+				if err := ioutil.WriteFile(fpath, []byte(fstr), 0644); err != nil {
+					return fmt.Errorf("failed to write back to %v: %v", fpath, err)
+				}
+			}
+
+			gmeCmd := exec.Command("go", "mod", "edit", "-require="+pkg.Module.Path+"@"+pkg.Module.Version)
+			gmeCmd.Dir = a.wd
+			gmeCmd.Env = buildEnv("")
+
+			if err := run(gmeCmd); err != nil {
+				return err
+			}
+
+			// now that we effectively have a copy of everything relevant in the
+			// target module (including replace directives), list to ensure they
+			// have been resolved
+
+			listCmd := exec.Command("go", "list", "-json", pkg.ImportPath)
+			listCmd.Dir = a.wd
+			listCmd.Env = buildEnv(proxy)
+
+			if err := run(listCmd); err != nil {
+				return err
+			}
 		}
 
 		a.mainPkgs = append(a.mainPkgs, pkg)
