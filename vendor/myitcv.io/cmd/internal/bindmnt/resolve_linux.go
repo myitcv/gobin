@@ -74,6 +74,14 @@ func resolve(p string) (string, error) {
 		}
 		source := sms[1]
 
+		// This happens when we have used a bind mount in, for example, a docker
+		// container where the target, e.g. /tmp, is the same as the source, /tmp
+		// on the host.
+		if target == source {
+			res = filepath.Join(p, res)
+			break
+		}
+
 		// calculate p relative to target
 		rel, err := filepath.Rel(target, p)
 		if err != nil {

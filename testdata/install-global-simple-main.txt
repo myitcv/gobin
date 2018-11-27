@@ -1,22 +1,24 @@
 # No GOPATH
-env HOME=$WORK/home
 env GOPATH=
 gobin github.com/gobin-testrepos/simple-main@v1.0.0
-stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/home/go/bin/simple-main'$'
+[!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/home/go/bin/simple-main\E'$'
+[windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\home\go\bin\simple-main.exe\E'$'
 ! stderr .+
-exists $HOME/go/bin/simple-main
+exists $HOME/go/bin/simple-main$exe
 
 # GOPATH set
 env GOPATH=$WORK/asdf
 gobin github.com/gobin-testrepos/simple-main@v1.0.0
-stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/asdf/bin/simple-main'$'
+[!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/asdf/bin/simple-main\E'$'
+[windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\asdf\bin\simple-main.exe\E'$'
 ! stderr .+
-exists $WORK/asdf/bin/simple-main
+exists $WORK/asdf/bin/simple-main$exe
 
 # GOBIN set
 env GOBIN=$WORK/gobin
 gobin github.com/gobin-testrepos/simple-main@v1.0.0
-stdout '^Installed github.com/gobin-testrepos/simple-main@v1.0.0 to '$WORK/gobin/simple-main'$'
+[!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/gobin/simple-main\E'$'
+[windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\gobin\simple-main.exe\E'$'
 ! stderr .+
-exists $WORK/gobin/simple-main
+exists $WORK/gobin/simple-main$exe
 

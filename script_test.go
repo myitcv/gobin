@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/rogpeppe/go-internal/goproxytest"
@@ -60,16 +62,48 @@ func TestScripts(t *testing.T) {
 		}
 		t.Fatalf("failed to get GOPATH for test: %v\n%s", err, stderr)
 	}
-	modTestGOPATH = string(out)
+	modTestGOPATH = strings.TrimSpace(string(out))
+
+	ucd, err := os.UserCacheDir()
+	if err != nil {
+		t.Fatalf("failed to get os.UserCacheDir: %v", err)
+	}
 
 	p := testscript.Params{
 		Dir: "testdata",
 		Setup: func(e *testscript.Env) error {
+			// TODO feels like this could be a method on testscript.Env?
+			getEnv := func(s string) string {
+				cmp := s + "="
+				for i := len(e.Vars) - 1; i >= 0; i-- {
+					v := e.Vars[i]
+					if strings.HasPrefix(v, cmp) {
+						return strings.TrimPrefix(v, cmp)
+					}
+				}
+				return ""
+			}
+
+			wd := getEnv("WORK")
+
 			e.Vars = append(e.Vars,
 				"TESTGOPATH="+modTestGOPATH,
 				"GOBINMODPATH="+pathToMod,
 				"GOPROXY="+proxyURL,
+				"USERCACHEDIR="+ucd,
 			)
+
+			if runtime.GOOS == "windows" {
+				e.Vars = append(e.Vars,
+					"USERPROFILE="+wd+"\\home",
+					"LOCALAPPDATA="+wd+"\\appdata",
+					"HOME="+wd+"\\home", // match USERPROFILE
+				)
+			} else {
+				e.Vars = append(e.Vars,
+					"HOME="+wd+"/home",
+				)
+			}
 			return nil
 		},
 	}
