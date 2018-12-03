@@ -1,8 +1,6 @@
 # When we supply -m, then we will _not_ get any replace statements that
 # are present in the main package's module's go.mod
 
-env HOME=$WORK/home
-
 cd repo
 gobin -m -run github.com/gobin-testrepos/simple-main@v1.0.0
 stdout '^Simple module-based main v1.0.0$'

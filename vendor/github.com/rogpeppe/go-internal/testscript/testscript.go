@@ -9,12 +9,15 @@ package testscript
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
+	"go/build"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -98,6 +101,7 @@ func Run(t *testing.T, p Params) {
 				name:        name,
 				file:        file,
 				params:      p,
+				ctxt:        context.Background(),
 			}
 			ts.setup()
 			if !p.TestWork {
@@ -134,6 +138,15 @@ type TestScript struct {
 	stderr      string            // standard error from last 'go' command; for 'stderr' command
 	stopped     bool              // test wants to stop early
 	start       time.Time         // time phase started
+	background  []backgroundCmd   // backgrounded 'exec' and 'go' commands
+
+	ctxt context.Context // per TestScript context
+}
+
+type backgroundCmd struct {
+	cmd  *exec.Cmd
+	wait <-chan struct{}
+	neg  bool // if true, cmd should fail
 }
 
 // setup sets up the test execution temporary directory and environment.
@@ -147,10 +160,22 @@ func (ts *TestScript) setup() {
 			homeEnvName() + "=/no-home",
 			tempEnvName() + "=" + filepath.Join(ts.workdir, "tmp"),
 			"devnull=" + os.DevNull,
+			"goversion=" + goVersion(ts),
 			":=" + string(os.PathListSeparator),
 		},
 		WorkDir: ts.workdir,
 		Cd:      ts.workdir,
+	}
+	// Must preserve SYSTEMROOT on Windows: https://github.com/golang/go/issues/25513 et al
+	if runtime.GOOS == "windows" {
+		env.Vars = append(env.Vars,
+			"SYSTEMROOT="+os.Getenv("SYSTEMROOT"),
+			"exe=.exe",
+		)
+	} else {
+		env.Vars = append(env.Vars,
+			"exe=",
+		)
 	}
 	if ts.params.Setup != nil {
 		ts.Check(ts.params.Setup(env))
@@ -164,6 +189,16 @@ func (ts *TestScript) setup() {
 			ts.envMap[kv[:i]] = kv[i+1:]
 		}
 	}
+}
+
+// goVersion returns the current Go version.
+func goVersion(ts *TestScript) string {
+	tags := build.Default.ReleaseTags
+	version := tags[len(tags)-1]
+	if !regexp.MustCompile(`^go([1-9][0-9]*)\.(0|[1-9][0-9]*)$`).MatchString(version) {
+		ts.Fatalf("invalid go version %q", version)
+	}
+	return version[2:]
 }
 
 // run runs the test script.
@@ -188,6 +223,17 @@ func (ts *TestScript) run() {
 	}
 
 	defer func() {
+		// On a normal exit from the test loop, background processes are cleaned up
+		// before we print PASS. If we return early (e.g., due to a test failure),
+		// don't print anything about the processes that were still running.
+		for _, bg := range ts.background {
+			interruptProcess(bg.cmd.Process)
+		}
+		for _, bg := range ts.background {
+			<-bg.wait
+		}
+		ts.background = nil
+
 		markTime()
 		// Flush testScript log to testing.T log.
 		ts.t.Log("\n" + ts.abbrev(ts.log.String()))
@@ -298,19 +344,30 @@ Script:
 
 		// Command can ask script to stop early.
 		if ts.stopped {
-			return
+			// Break instead of returning, so that we check the status of any
+			// background processes and print PASS.
+			break
 		}
 	}
+
+	for _, bg := range ts.background {
+		interruptProcess(bg.cmd.Process)
+	}
+	ts.cmdWait(false, nil)
 
 	// Final phase ended.
 	rewind()
 	markTime()
-	fmt.Fprintf(&ts.log, "PASS\n")
+	if !ts.stopped {
+		fmt.Fprintf(&ts.log, "PASS\n")
+	}
 }
 
 // condition reports whether the given condition is satisfied.
 func (ts *TestScript) condition(cond string) (bool, error) {
 	switch cond {
+	case runtime.GOOS, runtime.GOARCH, runtime.Compiler:
+		return true, nil
 	case "short":
 		return testing.Short(), nil
 	case "net":
@@ -372,8 +429,49 @@ func (ts *TestScript) exec(command string, args ...string) (stdout, stderr strin
 	var stdoutBuf, stderrBuf strings.Builder
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
-	err = cmd.Run()
+	if err = cmd.Start(); err == nil {
+		err = ctxWait(ts.ctxt, cmd)
+	}
 	return stdoutBuf.String(), stderrBuf.String(), err
+}
+
+// execBackground starts the given command line (an actual subprocess, not simulated)
+// in ts.cd with environment ts.env.
+func (ts *TestScript) execBackground(command string, args ...string) (*exec.Cmd, error) {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = ts.cd
+	cmd.Env = append(ts.env, "PWD="+ts.cd)
+	var stdoutBuf, stderrBuf strings.Builder
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+	return cmd, cmd.Start()
+}
+
+// ctxWait is like cmd.Wait, but terminates cmd with os.Interrupt if ctx becomes done.
+//
+// This differs from exec.CommandContext in that it prefers os.Interrupt over os.Kill.
+// (See https://golang.org/issue/21135.)
+func ctxWait(ctx context.Context, cmd *exec.Cmd) error {
+	errc := make(chan error, 1)
+	go func() { errc <- cmd.Wait() }()
+
+	select {
+	case err := <-errc:
+		return err
+	case <-ctx.Done():
+		interruptProcess(cmd.Process)
+		return <-errc
+	}
+}
+
+// interruptProcess sends os.Interrupt to p if supported, or os.Kill otherwise.
+func interruptProcess(p *os.Process) {
+	if err := p.Signal(os.Interrupt); err != nil {
+		// Per https://golang.org/pkg/os/#Signal, “Interrupt is not implemented on
+		// Windows; using it with os.Process.Signal will return an error.”
+		// Fall back to Kill instead.
+		p.Kill()
+	}
 }
 
 // Exec runs the given command and saves its stdout and stderr so
@@ -392,7 +490,12 @@ func (ts *TestScript) Exec(command string, args ...string) error {
 
 // expand applies environment variable expansion to the string s.
 func (ts *TestScript) expand(s string) string {
-	return os.Expand(s, func(key string) string { return ts.envMap[key] })
+	return os.Expand(s, func(key string) string {
+		if key1 := strings.TrimSuffix(key, "@R"); len(key1) != len(key) {
+			return regexp.QuoteMeta(ts.envMap[key1])
+		}
+		return ts.envMap[key]
+	})
 }
 
 // fatalf aborts the test with the given failure message.
@@ -408,6 +511,17 @@ func (ts *TestScript) MkAbs(file string) string {
 		return file
 	}
 	return filepath.Join(ts.cd, file)
+}
+
+// Setenv sets the value of the environment variable named by the key.
+func (ts *TestScript) Setenv(key, value string) {
+	ts.env = append(ts.env, key+"="+value)
+	ts.envMap[key] = value
+}
+
+// Getenv gets the value of the environment variable named by the key.
+func (ts *TestScript) Getenv(key string) string {
+	return ts.envMap[key]
 }
 
 // parse parses a single line as a list of space-separated arguments
@@ -469,74 +583,6 @@ func (ts *TestScript) parse(line string) []string {
 		}
 	}
 	return args
-}
-
-// diff returns a formatted diff of the two texts,
-// showing the entire text and the minimum line-level
-// additions and removals to turn text1 into text2.
-// (That is, lines only in text1 appear with a leading -,
-// and lines only in text2 appear with a leading +.)
-func diff(text1, text2 string) string {
-	if text1 != "" && !strings.HasSuffix(text1, "\n") {
-		text1 += "(missing final newline)"
-	}
-	lines1 := strings.Split(text1, "\n")
-	lines1 = lines1[:len(lines1)-1] // remove empty string after final line
-	if text2 != "" && !strings.HasSuffix(text2, "\n") {
-		text2 += "(missing final newline)"
-	}
-	lines2 := strings.Split(text2, "\n")
-	lines2 = lines2[:len(lines2)-1] // remove empty string after final line
-
-	// Naive dynamic programming algorithm for edit distance.
-	// https://en.wikipedia.org/wiki/Wagner–Fischer_algorithm
-	// dist[i][j] = edit distance between lines1[:len(lines1)-i] and lines2[:len(lines2)-j]
-	// (The reversed indices make following the minimum cost path
-	// visit lines in the same order as in the text.)
-	dist := make([][]int, len(lines1)+1)
-	for i := range dist {
-		dist[i] = make([]int, len(lines2)+1)
-		if i == 0 {
-			for j := range dist[0] {
-				dist[0][j] = j
-			}
-			continue
-		}
-		for j := range dist[i] {
-			if j == 0 {
-				dist[i][0] = i
-				continue
-			}
-			cost := dist[i][j-1] + 1
-			if cost > dist[i-1][j]+1 {
-				cost = dist[i-1][j] + 1
-			}
-			if lines1[len(lines1)-i] == lines2[len(lines2)-j] {
-				if cost > dist[i-1][j-1] {
-					cost = dist[i-1][j-1]
-				}
-			}
-			dist[i][j] = cost
-		}
-	}
-
-	var buf strings.Builder
-	i, j := len(lines1), len(lines2)
-	for i > 0 || j > 0 {
-		cost := dist[i][j]
-		if i > 0 && j > 0 && cost == dist[i-1][j-1] && lines1[len(lines1)-i] == lines2[len(lines2)-j] {
-			fmt.Fprintf(&buf, " %s\n", lines1[len(lines1)-i])
-			i--
-			j--
-		} else if i > 0 && cost == dist[i-1][j]+1 {
-			fmt.Fprintf(&buf, "-%s\n", lines1[len(lines1)-i])
-			i--
-		} else {
-			fmt.Fprintf(&buf, "+%s\n", lines2[len(lines2)-j])
-			j--
-		}
-	}
-	return buf.String()
 }
 
 func removeAll(dir string) error {

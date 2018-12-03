@@ -16,6 +16,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -99,10 +100,9 @@ func mainerr() error {
 		return fmt.Errorf("the -n and -g flags are mutually exclusive")
 	}
 
-	var gopath string     // effective GOPATH
-	var modCache string   // module cache path
-	var modDlCache string // module download cache
-	var gobinCache string // does what it says on the tin
+	var gopath string          // effective GOPATH
+	var gobinCache string      // does what it says on the tin
+	var localCacheProxy string // local filesystem-based module download cache
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -115,17 +115,16 @@ func mainerr() error {
 		if gopath != "" {
 			gopath = filepath.SplitList(gopath)[0]
 		} else {
-			uhd := userHomeDir()
-			if uhd == "" {
-				return fmt.Errorf("failed to determine user home directory")
+			uhd, err := userHomeDir()
+			if err != nil {
+				return fmt.Errorf("failed to determine user home directory: %v", err)
 			}
 			gopath = filepath.Join(uhd, "go")
 		}
 
 		// TODO I don't think the module cache path is advertised anywhere public...
 		// intentionally but in case it is, replace what follows
-		modCache = filepath.Join(gopath, "pkg", "mod")
-		modDlCache = filepath.Join(modCache, "cache", "download")
+		localCacheProxy = filepath.ToSlash("GOPROXY=file://" + filepath.Join(gopath, "pkg", "mod", "cache", "download"))
 
 		if *fMainMod {
 			md := cwd
@@ -207,12 +206,10 @@ func mainerr() error {
 	if !*fUpgrade {
 		// local resolution step
 		for _, pkg := range allPkgs {
-			proxy := "GOPROXY=file://" + modDlCache
-
 			useModCurr := *fMainMod && pkg.verPatt == ""
 
 			if !useModCurr {
-				if err := pkg.get(proxy); err != nil {
+				if err := pkg.get(localCacheProxy); err != nil {
 					if *fNoNet {
 						return err
 					}
@@ -227,7 +224,7 @@ func mainerr() error {
 			// error... probably can't assume that any error
 			// here is as a result of readonly... but we can
 			// likely improve the error message (somehow).
-			if err := pkg.list(proxy); err != nil {
+			if err := pkg.list(localCacheProxy); err != nil {
 				if !useModCurr {
 					return err
 				}
@@ -251,6 +248,9 @@ func mainerr() error {
 	// network resolution step
 	for _, pkg := range netPkgs {
 		proxy := os.Getenv("GOPROXY")
+		if proxy != "" {
+			proxy = "GOPROXY=" + proxy
+		}
 
 		useModCurr := *fMainMod && pkg.verPatt == ""
 
@@ -288,25 +288,35 @@ func mainerr() error {
 			// and the containing module's version
 			var mainrel string
 			{
-				emp, err := module.EncodePath(filepath.FromSlash(mp.Module.Path))
+				emp, err := module.EncodePath(mp.Module.Path)
 				if err != nil {
 					return fmt.Errorf("failed to encode module path %v: %v", mp.Module.Path, err)
 				}
 
-				md := emp
+				md := filepath.FromSlash(emp)
+
 				if mp.Module.Version != "" {
-					md = filepath.Join(md, "@v", mp.Module.Version)
+					emv, err := module.EncodeVersion(mp.Module.Version)
+					if err != nil {
+						return fmt.Errorf("failed to encode module version %v: %v", mp.Module.Version, err)
+					}
+
+					md = filepath.Join(md, "@v", emv)
 				}
 
-				epp, err := module.EncodePath(filepath.FromSlash(mp.ImportPath))
+				epp, err := module.EncodePath(mp.ImportPath)
 				if err != nil {
 					return fmt.Errorf("failed to encode package relative path %v: %v", mp.ImportPath, err)
 				}
-				mainrel = filepath.Join(md, epp)
+				mainrel = filepath.Join(md, filepath.FromSlash(epp))
 			}
 
 			gobin := filepath.Join(gobinCache, mainrel)
 			target := filepath.Join(gobin, path.Base(mp.ImportPath))
+
+			if runtime.GOOS == "windows" {
+				target += ".exe"
+			}
 
 			// optimistically remove our target in case we are installing over self
 			// TODO work out what to do for Windows
@@ -314,13 +324,11 @@ func mainerr() error {
 				_ = os.Remove(target)
 			}
 
-			proxy := "file://" + modDlCache
-
 			var stdout bytes.Buffer
 
 			installCmd := exec.Command("go", "install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
-			installCmd.Env = append(buildEnv("GOPROXY="+proxy), "GOBIN="+gobin)
+			installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
 			installCmd.Stdout = &stdout
 
 			if err := run(installCmd); err != nil {
@@ -335,9 +343,20 @@ func mainerr() error {
 			case *fVersion:
 				fmt.Printf("%v %v\n", mp.Module.Path, mp.Module.Version)
 			case *fRun:
-				argv := append([]string{target}, runArgs...)
-				if err := syscall.Exec(argv[0], argv, os.Environ()); err != nil {
-					return fmt.Errorf("failed to exec %v: %v", target, err)
+				if runtime.GOOS == "windows" {
+					run := exec.Command(target, runArgs...)
+					run.Stdout = os.Stdout
+					run.Stderr = os.Stderr
+					if err := run.Run(); err != nil {
+						if _, ok := err.(*exec.ExitError); !ok {
+							return fmt.Errorf("failed to run %v: %v", strings.Join(run.Args, " "), err)
+						}
+					}
+				} else {
+					argv := append([]string{target}, runArgs...)
+					if err := syscall.Exec(argv[0], argv, os.Environ()); err != nil {
+						return fmt.Errorf("failed to exec %v: %v", strings.Join(argv, " "), err)
+					}
 				}
 			default:
 				installBin := os.Getenv("GOBIN")
@@ -353,6 +372,10 @@ func mainerr() error {
 				}
 				defer src.Close()
 				bin := filepath.Join(installBin, path.Base(mp.ImportPath))
+
+				if runtime.GOOS == "windows" {
+					bin += ".exe"
+				}
 
 				openMode := os.O_CREATE | os.O_WRONLY
 
