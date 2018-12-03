@@ -18,7 +18,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/rogpeppe/go-internal/module"
@@ -124,7 +123,7 @@ func mainerr() error {
 
 		// TODO I don't think the module cache path is advertised anywhere public...
 		// intentionally but in case it is, replace what follows
-		localCacheProxy = filepath.ToSlash("GOPROXY=file://" + filepath.Join(gopath, "pkg", "mod", "cache", "download"))
+		localCacheProxy = "GOPROXY=file://" + path.Join(filepath.ToSlash(gopath), "pkg", "mod", "cache", "download")
 
 		if *fMainMod {
 			md := cwd
@@ -343,20 +342,16 @@ func mainerr() error {
 			case *fVersion:
 				fmt.Printf("%v %v\n", mp.Module.Path, mp.Module.Version)
 			case *fRun:
-				if runtime.GOOS == "windows" {
-					run := exec.Command(target, runArgs...)
-					run.Stdout = os.Stdout
-					run.Stderr = os.Stderr
-					if err := run.Run(); err != nil {
-						if _, ok := err.(*exec.ExitError); !ok {
-							return fmt.Errorf("failed to run %v: %v", strings.Join(run.Args, " "), err)
-						}
+				run := exec.Command(target, runArgs...)
+				run.Args[0] = path.Base(mp.ImportPath)
+				run.Stdout = os.Stdout
+				run.Stderr = os.Stderr
+				if err := run.Run(); err != nil {
+					if _, ok := err.(*exec.ExitError); ok {
+						return err
 					}
-				} else {
-					argv := append([]string{target}, runArgs...)
-					if err := syscall.Exec(argv[0], argv, os.Environ()); err != nil {
-						return fmt.Errorf("failed to exec %v: %v", strings.Join(argv, " "), err)
-					}
+
+					return fmt.Errorf("failed to run %v: %v", run.Path, err)
 				}
 			default:
 				installBin := os.Getenv("GOBIN")
