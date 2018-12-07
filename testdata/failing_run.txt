@@ -1,0 +1,5 @@
+! gobin -run example.com/fail
+stdout '^This will fail$'
+stderr '^exit status 42$'
+
+

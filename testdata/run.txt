@@ -1,0 +1,20 @@
+# Various -run tests
+
+# Ensure os.Args[0] is set correctly
+gobin -m -run example.com/blah
+stdout '^blah$'
+
+-- go.mod --
+module example.com/blah
+
+-- main.go --
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	fmt.Println(os.Args[0])
+}
