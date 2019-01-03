@@ -6,7 +6,8 @@
 cd repo
 ! gobin -mod=readonly github.com/gobin-testrepos/simple-main
 ! stdout .+
-stderr 'import lookup disabled by -mod=readonly'
+[go1.11] [!go1.12] stderr 'import lookup disabled by -mod=readonly'
+[go1.12] stderr 'go: updates to go.mod needed, disabled by -mod=readonly'
 
 -- repo/go.mod --
 module example.com/repo

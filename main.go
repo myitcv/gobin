@@ -32,15 +32,16 @@ const (
 var (
 	exitCode = 0
 
-	fMainMod  = flag.Bool("m", false, "resolve dependencies via the main module (as given by go env GOMOD)")
-	fMod      = flag.String("mod", "", "provide additional control over updating and use of go.mod")
-	fRun      = flag.Bool("run", false, "run the provided main package")
-	fPrint    = flag.Bool("p", false, "print gobin install cache location for main packages")
-	fVersion  = flag.Bool("v", false, "print the module path and version for main packages")
-	fDownload = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
-	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
-	fNoNet    = flag.Bool("nonet", false, "prevent network access")
-	fDebug    = flag.Bool("debug", false, "print debug information")
+	fMainMod    = flag.Bool("m", false, "resolve dependencies via the main module (as given by go env GOMOD)")
+	fMod        = flag.String("mod", "", "provide additional control over updating and use of go.mod")
+	fRun        = flag.Bool("run", false, "run the provided main package")
+	fPrint      = flag.Bool("p", false, "print gobin install cache location for main packages")
+	fVersion    = flag.Bool("v", false, "print the module path and version for main packages")
+	fDownload   = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
+	fUpgrade    = flag.Bool("u", false, "check for the latest tagged version of main packages")
+	fNoNet      = flag.Bool("nonet", false, "prevent network access")
+	fDebug      = flag.Bool("debug", false, "print debug information")
+	fParseFlags = flag.Bool("parseFlags", false, "dump parsed flag state")
 )
 
 func main() {
@@ -97,6 +98,41 @@ func mainerr() error {
 
 	if *fUpgrade && *fNoNet {
 		return fmt.Errorf("the -n and -g flags are mutually exclusive")
+	}
+
+	// flag parsing and checking is complete at this point
+	if *fParseFlags {
+		var out struct {
+			Mode           string
+			Patterns       []string
+			MainModResolve bool
+		}
+
+		switch {
+		case *fRun:
+			out.Mode = "run"
+		case *fPrint:
+			out.Mode = "print"
+		case *fDownload:
+			out.Mode = "download"
+		case *fVersion:
+			out.Mode = "version"
+		}
+
+		if *fMainMod {
+			out.MainModResolve = true
+		}
+
+		out.Patterns = flag.Args()
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+
+		if err := enc.Encode(out); err != nil {
+			return fmt.Errorf("failed to JSON marshal parsed flags: %v", err)
+		}
+
+		return nil
 	}
 
 	var gopath string          // effective GOPATH

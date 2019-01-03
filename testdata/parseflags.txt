@@ -1,0 +1,5 @@
+gobin -parseFlags -run -m example.com/blah
+stdout '"Mode": "run"'
+stdout '"example.com/blah"'
+stdout '"MainModResolve": true'
+! stderr .+

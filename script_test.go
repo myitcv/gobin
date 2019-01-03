@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -15,6 +16,8 @@ import (
 
 var (
 	proxyURL string
+
+	goVersionCondRegex = regexp.MustCompile(`\Ago\d\.\d\d*\z`)
 )
 
 func TestMain(m *testing.M) {
