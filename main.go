@@ -32,15 +32,16 @@ const (
 var (
 	exitCode = 0
 
-	fMainMod  = flag.Bool("m", false, "resolve dependencies via the main module (as given by go env GOMOD)")
-	fMod      = flag.String("mod", "", "provide additional control over updating and use of go.mod")
-	fRun      = flag.Bool("run", false, "run the provided main package")
-	fPrint    = flag.Bool("p", false, "print gobin install cache location for main packages")
-	fVersion  = flag.Bool("v", false, "print the module path and version for main packages")
-	fDownload = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
-	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
-	fNoNet    = flag.Bool("nonet", false, "prevent network access")
-	fDebug    = flag.Bool("debug", false, "print debug information")
+	fMainMod    = flag.Bool("m", false, "resolve dependencies via the main module (as given by go env GOMOD)")
+	fMod        = flag.String("mod", "", "provide additional control over updating and use of go.mod")
+	fRun        = flag.Bool("run", false, "run the provided main package")
+	fPrint      = flag.Bool("p", false, "print gobin install cache location for main packages")
+	fVersion    = flag.Bool("v", false, "print the module path and version for main packages")
+	fDownload   = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
+	fUpgrade    = flag.Bool("u", false, "check for the latest tagged version of main packages")
+	fNoNet      = flag.Bool("nonet", false, "prevent network access")
+	fDebug      = flag.Bool("debug", false, "print debug information")
+	fParseFlags = flag.Bool("parseFlags", false, "dump parsed flag state")
 )
 
 func main() {
@@ -99,6 +100,54 @@ func mainerr() error {
 		return fmt.Errorf("the -n and -g flags are mutually exclusive")
 	}
 
+	var pkgPatts []string // the package patterns
+	var runArgs []string  // -r command line run args
+
+	pkgPatts = flag.Args()
+	if len(pkgPatts) == 0 {
+		return fmt.Errorf("need to provide at least one main package")
+	}
+	if *fRun && len(pkgPatts) > 1 {
+		pkgPatts, runArgs = pkgPatts[:1], pkgPatts[1:]
+	}
+
+	// flag parsing and checking is complete at this point
+	if *fParseFlags {
+		var out struct {
+			Mode           string
+			Patterns       []string
+			Args           []string
+			MainModResolve bool
+		}
+
+		switch {
+		case *fRun:
+			out.Mode = "run"
+		case *fPrint:
+			out.Mode = "print"
+		case *fDownload:
+			out.Mode = "download"
+		case *fVersion:
+			out.Mode = "version"
+		}
+
+		if *fMainMod {
+			out.MainModResolve = true
+		}
+
+		out.Patterns = pkgPatts
+		out.Args = runArgs
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+
+		if err := enc.Encode(out); err != nil {
+			return fmt.Errorf("failed to JSON marshal parsed flags: %v", err)
+		}
+
+		return nil
+	}
+
 	var gopath string          // effective GOPATH
 	var gobinCache string      // does what it says on the tin
 	var localCacheProxy string // local filesystem-based module download cache
@@ -150,20 +199,12 @@ func mainerr() error {
 		}
 	}
 
-	var allPkgs []*arg   // all of the non-run command line provided packages
-	var runArgs []string // -r command line run args
-	var netPkgs []*arg   // packages that need network resolution
-	var nonMain []*arg   // non-main packages
+	var allPkgs []*arg // all of the non-run command line provided packages
+	var netPkgs []*arg // packages that need network resolution
+	var nonMain []*arg // non-main packages
 
 	// prepare allPkgs
 	{
-		pkgPatts := flag.Args()
-		if len(pkgPatts) == 0 {
-			return fmt.Errorf("need to provide at least one main package")
-		}
-		if *fRun && len(pkgPatts) > 1 {
-			pkgPatts, runArgs = pkgPatts[:1], pkgPatts[1:]
-		}
 
 		var tmpDirs []string
 		defer func() {

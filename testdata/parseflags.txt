@@ -1,0 +1,15 @@
+gobin -parseFlags -run -m example.com/blah input
+! stderr .+
+cmp stdout output.golden
+
+-- output.golden --
+{
+  "Mode": "run",
+  "Patterns": [
+    "example.com/blah"
+  ],
+  "Args": [
+    "input"
+  ],
+  "MainModResolve": true
+}
