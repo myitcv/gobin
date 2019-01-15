@@ -1,14 +1,19 @@
 language: go
 
+go:
+  - "1.11.x"
+  - "1.12beta2"
+
+os:
+  - linux
+  - osx
+  - windows
+
 matrix:
   include:
     - os: linux
       go: "1.11.x"
       env: CHECK_GOFMT=1
-    - os: osx
-      go: "1.11.x"
-    - os: windows
-      go: "1.11.x"
 
 env:
   global:

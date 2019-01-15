@@ -4,7 +4,7 @@ github.com/golang/protobuf/proto
 github.com/google/go-github/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/rogpeppe/go-internal v1.0.1-alpha.3
+# github.com/rogpeppe/go-internal v1.0.1-alpha.6
 github.com/rogpeppe/go-internal/cmd/txtar-addmod
 github.com/rogpeppe/go-internal/module
 github.com/rogpeppe/go-internal/txtar
@@ -35,7 +35,7 @@ gopkg.in/errgo.v2/fmt/errors
 gopkg.in/errgo.v2/errors
 # mvdan.cc/sh v2.6.0+incompatible
 mvdan.cc/sh/syntax
-# myitcv.io v0.0.0-20181201054937-267f588253bb
+# myitcv.io v0.0.0-20190111073537-da37b5ed765c
 myitcv.io/cmd/egrunner
 myitcv.io/cmd/githubcli
 myitcv.io/cmd/mdreplace
