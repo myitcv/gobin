@@ -1,5 +1,9 @@
 language: go
 
+cache:
+  directories:
+  - $GOPATH/pkg/mod/cache
+
 go:
   - "1.11.x"
   - "1.12beta2"
