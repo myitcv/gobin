@@ -1,9 +1,3 @@
-# github.com/golang/protobuf v1.2.0
-github.com/golang/protobuf/proto
-# github.com/google/go-github v17.0.0+incompatible
-github.com/google/go-github/github
-# github.com/google/go-querystring v1.0.0
-github.com/google/go-querystring/query
 # github.com/rogpeppe/go-internal v1.0.1-alpha.6
 github.com/rogpeppe/go-internal/cmd/txtar-addmod
 github.com/rogpeppe/go-internal/module
@@ -16,28 +10,6 @@ github.com/rogpeppe/go-internal/par
 github.com/rogpeppe/go-internal/imports
 github.com/rogpeppe/go-internal/internal/textutil
 github.com/rogpeppe/go-internal/testenv
-# golang.org/x/net v0.0.0-20180731172858-49c15d80dfbc
-golang.org/x/net/context
-golang.org/x/net/context/ctxhttp
-# golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4
-golang.org/x/oauth2
-golang.org/x/oauth2/internal
-# google.golang.org/appengine v1.2.0
-google.golang.org/appengine/urlfetch
-google.golang.org/appengine/internal
-google.golang.org/appengine/internal/urlfetch
-google.golang.org/appengine/internal/base
-google.golang.org/appengine/internal/datastore
-google.golang.org/appengine/internal/log
-google.golang.org/appengine/internal/remote_api
 # gopkg.in/errgo.v2 v2.1.0
 gopkg.in/errgo.v2/fmt/errors
 gopkg.in/errgo.v2/errors
-# mvdan.cc/sh v2.6.0+incompatible
-mvdan.cc/sh/syntax
-# myitcv.io v0.0.0-20190111073537-da37b5ed765c
-myitcv.io/cmd/egrunner
-myitcv.io/cmd/githubcli
-myitcv.io/cmd/mdreplace
-myitcv.io/cmd/internal/bindmnt
-myitcv.io/cmd/mdreplace/internal/itemtype
