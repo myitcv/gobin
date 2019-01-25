@@ -12,7 +12,11 @@ exec which gobin
 stdout ^$GOBIN/gobin'$'
 
 cd $WORK/repo
-exec go mod edit -replace=myitcv.io=$GOBINMODPATH
+
+# Temporarily remove this whilst we break the circular module dependency
+# https://github.com/golang/go/issues/29773
+# exec go mod edit -replace=myitcv.io=$GOBINMODPATH
+
 exec gobin -m github.com/myitcv/gobin
 
 -- repo/go.mod --
