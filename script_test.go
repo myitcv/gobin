@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -37,6 +38,41 @@ func (m gobinMain) Run() int {
 	proxyURL = srv.URL
 
 	return m.m.Run()
+}
+
+func TestExitCode(t *testing.T) {
+	var err error
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatalf("failed to determine os.Executable: %v", err)
+	}
+
+	temp, err := ioutil.TempDir("", "gobin-exitcode-test")
+	if err != nil {
+		t.Fatalf("failed to create temp directory for home: %v", err)
+	}
+	defer os.RemoveAll(temp)
+
+	cmd := exec.Command(self, "-run", "example.com/fail")
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, homeEnv(temp)...)
+	cmd.Env = append(cmd.Env,
+		"GOPROXY="+proxyURL,
+		"TESTSCRIPT_COMMAND=gobin",
+	)
+
+	err = cmd.Run()
+	if err == nil {
+		t.Fatalf("unexpected success")
+	}
+	ee, ok := err.(*exec.ExitError)
+	if !ok {
+		t.Fatalf("expected *exec.ExitError; got %T: %v", err, err)
+	}
+	want := 42
+	if got := ExitCode(ee.ProcessState); want != got {
+		t.Fatalf("expected exit code %v; got %v", want, got)
+	}
 }
 
 func TestScripts(t *testing.T) {
@@ -93,17 +129,8 @@ func TestScripts(t *testing.T) {
 				"USERCACHEDIR="+ucd,
 			)
 
-			if runtime.GOOS == "windows" {
-				e.Vars = append(e.Vars,
-					"USERPROFILE="+wd+"\\home",
-					"LOCALAPPDATA="+wd+"\\appdata",
-					"HOME="+wd+"\\home", // match USERPROFILE
-				)
-			} else {
-				e.Vars = append(e.Vars,
-					"HOME="+wd+"/home",
-				)
-			}
+			e.Vars = append(e.Vars, homeEnv(wd)...)
+
 			return nil
 		},
 	}
@@ -111,4 +138,16 @@ func TestScripts(t *testing.T) {
 		t.Fatal(err)
 	}
 	testscript.Run(t, p)
+}
+
+func homeEnv(base string) []string {
+	if runtime.GOOS == "windows" {
+		return []string{
+			"USERPROFILE=" + base + "\\home",
+			"LOCALAPPDATA=" + base + "\\appdata",
+			"HOME=" + base + "\\home", // match USERPROFILE
+		}
+	} else {
+		return []string{"HOME=" + base + "/home"}
+	}
 }

@@ -54,6 +54,9 @@ func main() {
 
 func main1() int {
 	if err := mainerr(); err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			return ExitCode(ee.ProcessState)
+		}
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}

@@ -14,6 +14,7 @@ import "fmt"
 import "os"
 
 func main() {
-  fmt.Println("This will fail")
-  os.Exit(42)
+	fmt.Println("This will fail")
+	fmt.Fprintln(os.Stderr, "It's bad")
+	os.Exit(42)
 }
