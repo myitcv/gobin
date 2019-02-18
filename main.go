@@ -328,12 +328,12 @@ func mainerr() error {
 
 			var stdout bytes.Buffer
 
-			installCmd := exec.Command("go", "install", mp.ImportPath)
+			installCmd := goCommand("install", mp.ImportPath)
 			installCmd.Dir = pkg.wd
 			installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
 			installCmd.Stdout = &stdout
 
-			if err := run(installCmd); err != nil {
+			if err := installCmd.run(); err != nil {
 				return err
 			}
 
@@ -436,11 +436,11 @@ var (
 func (a *arg) get(proxy string) error {
 	env := buildEnv(proxy)
 
-	getCmd := exec.Command("go", "get", "-d", a.patt)
+	getCmd := goCommand("get", "-d", a.patt)
 	getCmd.Dir = a.wd
 	getCmd.Env = env
 
-	if err := run(getCmd); err != nil {
+	if err := getCmd.run(); err != nil {
 		return err
 	}
 
@@ -452,12 +452,12 @@ func (a *arg) list(proxy string) error {
 
 	var stdout bytes.Buffer
 
-	listCmd := exec.Command("go", "list", "-json", a.pkgPatt)
+	listCmd := goCommand("list", "-json", a.pkgPatt)
 	listCmd.Dir = a.wd
 	listCmd.Stdout = &stdout
 	listCmd.Env = env
 
-	if err := run(listCmd); err != nil {
+	if err := listCmd.run(); err != nil {
 		return err
 	}
 
@@ -541,11 +541,11 @@ func (a *arg) list(proxy string) error {
 				}
 			}
 
-			gmeCmd := exec.Command("go", "mod", "edit", "-require="+pkg.Module.Path+"@"+pkg.Module.Version)
+			gmeCmd := goCommand("mod", "edit", "-require="+pkg.Module.Path+"@"+pkg.Module.Version)
 			gmeCmd.Dir = a.wd
 			gmeCmd.Env = buildEnv("")
 
-			if err := run(gmeCmd); err != nil {
+			if err := gmeCmd.run(); err != nil {
 				return err
 			}
 
@@ -553,11 +553,11 @@ func (a *arg) list(proxy string) error {
 			// target module (including replace directives), list to ensure they
 			// have been resolved
 
-			listCmd := exec.Command("go", "list", "-json", pkg.ImportPath)
+			listCmd := goCommand("list", "-json", pkg.ImportPath)
 			listCmd.Dir = a.wd
 			listCmd.Env = buildEnv(proxy)
 
-			if err := run(listCmd); err != nil {
+			if err := listCmd.run(); err != nil {
 				return err
 			}
 		}
@@ -583,10 +583,33 @@ func buildEnv(proxy string) []string {
 	return append(env, "GOFLAGS="+goflags)
 }
 
-func run(cmd *exec.Cmd) error {
+type goCmd struct {
+	*exec.Cmd
+}
+
+func goCommand(args ...string) *goCmd {
+	return &goCmd{
+		Cmd: exec.Command("go", args...),
+	}
+}
+
+func (cmd *goCmd) run() error {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	start := time.Now()
+
+	if cmd.Env == nil {
+		cmd.Env = os.Environ()
+	}
+	// in -run mode, it only makes sense to perform go commands in line with
+	// runtime.GOOS and runtime.GOARCH. In the edge case scenario where this is
+	// intended, use gobin -p with appropriate GOOS and GOARCH env vars set.
+	if *fRun {
+		cmd.Env = append(cmd.Env,
+			"GOOS="+runtime.GOOS,
+			"GOARCH="+runtime.GOARCH,
+		)
+	}
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run %v: %v\n%s", strings.Join(cmd.Args, " "), err, stderr.String())
@@ -598,12 +621,8 @@ func run(cmd *exec.Cmd) error {
 		return nil
 	}
 
-	env := cmd.Env
-	if env == nil {
-		env = os.Environ()
-	}
 	var goenv []string
-	for _, v := range env {
+	for _, v := range cmd.Env {
 		if strings.HasPrefix(v, "GO") {
 			goenv = append(goenv, v)
 		}
