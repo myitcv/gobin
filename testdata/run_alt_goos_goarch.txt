@@ -1,0 +1,19 @@
+env GOOS=rubbish
+env GOARCH=myarch
+gobin -m -run mod.com/p
+stdout '^GOOS is rubbish, GOARCH is myarch$'
+
+-- go.mod --
+module mod.com
+
+-- p/main.go --
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	fmt.Printf("GOOS is %v, GOARCH is %v\n", os.Getenv("GOOS"), os.Getenv("GOARCH"))
+}
