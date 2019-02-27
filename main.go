@@ -347,6 +347,7 @@ func mainerr() error {
 			case *fRun:
 				run := exec.Command(target, runArgs...)
 				run.Args[0] = path.Base(mp.ImportPath)
+				run.Stdin = os.Stdin
 				run.Stdout = os.Stdout
 				run.Stderr = os.Stderr
 				if err := run.Run(); err != nil {

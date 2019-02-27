@@ -1,8 +1,10 @@
 # Various -run tests
 
-# Ensure os.Args[0] is set correctly
+# Ensure os.Args[0] is set correctly and that Stdin is correctly
+# attached
+stdin input
 gobin -m -run example.com/blah
-stdout '^blah$'
+cmp stdout output.golden
 
 -- go.mod --
 module example.com/blah
@@ -12,9 +14,18 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
 func main() {
 	fmt.Println(os.Args[0])
+	if _, err := io.Copy(os.Stdout, os.Stdin); err != nil {
+		panic(err)
+	}
 }
+-- input --
+This is stdin
+-- output.golden --
+blah
+This is stdin
