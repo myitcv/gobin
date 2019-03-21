@@ -1,0 +1,7 @@
+# A test to ensure that where a major version (>=2) exists
+# at the end of the main package path that we end up with
+# the right binary name
+
+gobin -p example.com/good/v2
+stdout [/\\]good$exe$
+! stderr .+
