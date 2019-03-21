@@ -314,7 +314,12 @@ func mainerr() error {
 			}
 
 			gobin := filepath.Join(gobinCache, mainrel)
-			target := filepath.Join(gobin, path.Base(mp.ImportPath))
+			pref, _, ok := module.SplitPathVersion(mp.ImportPath)
+			if !ok {
+				return fmt.Errorf("failed to derive non-version prefix from %v", mp.ImportPath)
+			}
+			base := path.Base(pref)
+			target := filepath.Join(gobin, base)
 
 			if runtime.GOOS == "windows" {
 				target += ".exe"
