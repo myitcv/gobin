@@ -1,11 +1,11 @@
 gobin -p github.com/gobin-testrepos/non-module@v1.0.0
-[linux]   stdout ^$HOME\Q/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module\E'$'
-[darwin]  stdout ^$HOME\Q/Library/Caches/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module\E'$'
-[windows] stdout ^${LOCALAPPDATA@R}\Q\gobin\github.com\gobin-testrepos\non-module\@v\v1.0.0\github.com\gobin-testrepos\non-module\non-module.exe\E'$'
+[linux]   stdout ^$HOME\Q/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/non-module\E'$'
+[darwin]  stdout ^$HOME\Q/Library/Caches/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/non-module\E'$'
+[windows] stdout ^${LOCALAPPDATA@R}\Q\gobin\github.com\gobin-testrepos\non-module\@v\v1.0.0\non-module.exe\E'$'
 ! stderr .+
 
-[linux]   exec $HOME/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module
-[darwin]  exec $HOME/Library/Caches/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module
-[windows] exec $LOCALAPPDATA\gobin\github.com\gobin-testrepos\non-module\@v\v1.0.0\github.com\gobin-testrepos\non-module\non-module.exe
+[linux]   exec $HOME/.cache/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/non-module
+[darwin]  exec $HOME/Library/Caches/gobin/github.com/gobin-testrepos/non-module/@v/v1.0.0/non-module
+[windows] exec $LOCALAPPDATA\gobin\github.com\gobin-testrepos\non-module\@v\v1.0.0\non-module.exe
 stdout '^I am not a module$'
 ! stderr .+

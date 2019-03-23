@@ -1,7 +1,7 @@
 gobin -d github.com/gobin-testrepos/simple-main@v1.0.0
 ! stdout .+
 ! stderr .+
-[linux]   exists $HOME/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
-[darwin]  exists $HOME/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
-[windows] exists $LOCALAPPDATA/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main.exe
+[linux]   exists $HOME/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main
+[darwin]  exists $HOME/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main
+[windows] exists $LOCALAPPDATA/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main.exe
 
