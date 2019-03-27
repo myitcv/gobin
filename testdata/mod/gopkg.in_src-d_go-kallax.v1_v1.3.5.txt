@@ -1,0 +1,15 @@
+module gopkg.in/src-d/go-kallax.v1@v1.3.5
+
+-- .mod --
+module gopkg.in/src-d/go-kallax.v1
+-- .info --
+{"Version":"v1.3.5","Time":"2018-06-07T08:58:58Z"}
+
+-- generator/cli/kallax/main.go --
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("This is kallax")
+}

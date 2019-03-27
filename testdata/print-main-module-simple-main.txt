@@ -1,10 +1,9 @@
 cd repo
 gobin -m -p github.com/gobin-testrepos/simple-main
-[!windows] stdout ^${WORK@R}\Q/repo/.gobincache/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main\E'$'
-[windows]  stdout ^${WORK@R}\Q\repo\.gobincache\github.com\gobin-testrepos\simple-main\@v\v1.0.0\github.com\gobin-testrepos\simple-main\simple-main.exe\E'$'
+stdout ^${WORK@R}[/\\]repo[/\\].gobincache[/\\]github.com[/\\]gobin-testrepos[/\\]simple-main[/\\]@v[/\\]v1.0.0[/\\]simple-main$exe'$'
 ! stderr .+
 
-exec $WORK/repo/.gobincache/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main$exe
+exec $WORK/repo/.gobincache/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main$exe
 stdout '^Simple module-based main v1.0.0$'
 ! stderr .+
 

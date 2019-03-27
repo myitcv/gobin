@@ -1,0 +1,14 @@
+# Test that we have the correct logic for gopkg.in paths
+# per https://github.com/myitcv/gobin/issues/65
+
+gobin -p gopkg.in/src-d/go-kallax.v1/generator/cli/kallax
+[linux]   stdout ^$HOME\Q/.cache/gobin/gopkg.in/src-d/go-kallax.v1/@v/v1.3.5/generator/cli/kallax/kallax\E'$'
+[darwin]  stdout ^$HOME\Q/Library/Caches/gobin/gopkg.in/src-d/go-kallax.v1/@v/v1.3.5/generator/cli/kallax/kallax\E'$'
+[windows] stdout ^${LOCALAPPDATA@R}\Q\gobin\gopkg.in\src-d\go-kallax.v1\@v\v1.3.5\generator\cli\kallax\kallax.exe\E'$'
+! stderr .+
+
+[linux]   exec $HOME/.cache/gobin/gopkg.in/src-d/go-kallax.v1/@v/v1.3.5/generator/cli/kallax/kallax
+[darwin]  exec $HOME/Library/Caches/gobin/gopkg.in/src-d/go-kallax.v1/@v/v1.3.5/generator/cli/kallax/kallax
+[windows] exec $LOCALAPPDATA/gobin/gopkg.in\src-d\go-kallax.v1\@v\v1.3.5\generator\cli\kallax\kallax.exe
+stdout '^This is kallax$'
+! stderr .+

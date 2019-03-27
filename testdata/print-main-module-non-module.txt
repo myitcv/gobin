@@ -1,10 +1,9 @@
 cd repo
 gobin -m -p github.com/gobin-testrepos/non-module
-[!windows] stdout ^${WORK@R}\Q/repo/.gobincache/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module\E'$'
-[windows]  stdout ^${WORK@R}\Q\repo\.gobincache\github.com\gobin-testrepos\non-module\@v\v1.0.0\github.com\gobin-testrepos\non-module\non-module.exe\E'$'
+stdout ^${WORK@R}[/\\]repo[/\\].gobincache[/\\]github.com[/\\]gobin-testrepos[/\\]non-module[/\\]@v[/\\]v1.0.0[/\\]non-module$exe'$'
 ! stderr .+
 
-exec $WORK/repo/.gobincache/github.com/gobin-testrepos/non-module/@v/v1.0.0/github.com/gobin-testrepos/non-module/non-module$exe
+exec $WORK/repo/.gobincache/github.com/gobin-testrepos/non-module/@v/v1.0.0/non-module$exe
 stdout '^I am not a module$'
 ! stderr .+
 

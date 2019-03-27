@@ -306,19 +306,29 @@ func mainerr() error {
 					md = filepath.Join(md, "@v", emv)
 				}
 
-				epp, err := module.EncodePath(mp.ImportPath)
-				if err != nil {
-					return fmt.Errorf("failed to encode package relative path %v: %v", mp.ImportPath, err)
+				if mp.Module.Path != mp.ImportPath {
+					// We don't need to encode what remains in the pkg path because
+					// we've already uniquely identified the module. If there are
+					// case flips within a module then...  well, we'll see.
+					pkgRem := strings.TrimPrefix(mp.ImportPath, mp.Module.Path+"/")
+					mainrel = filepath.Join(md, filepath.FromSlash(pkgRem))
+				} else {
+					mainrel = md
 				}
-				mainrel = filepath.Join(md, filepath.FromSlash(epp))
 			}
 
 			gobin := filepath.Join(gobinCache, mainrel)
-			pref, _, ok := module.SplitPathVersion(mp.ImportPath)
-			if !ok {
-				return fmt.Errorf("failed to derive non-version prefix from %v", mp.ImportPath)
+
+			var base string
+			if mp.Module.Path == mp.ImportPath {
+				pref, _, ok := module.SplitPathVersion(mp.ImportPath)
+				if !ok {
+					return fmt.Errorf("failed to derive non-version prefix from %v", mp.ImportPath)
+				}
+				base = path.Base(pref)
+			} else {
+				base = path.Base(mp.ImportPath)
 			}
-			base := path.Base(pref)
 			target := filepath.Join(gobin, base)
 
 			if runtime.GOOS == "windows" {

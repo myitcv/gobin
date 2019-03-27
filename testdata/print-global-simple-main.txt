@@ -1,11 +1,11 @@
 gobin -p github.com/gobin-testrepos/simple-main@v1.0.0
-[linux]   stdout ^$HOME\Q/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main\E'$'
-[darwin]  stdout ^$HOME\Q/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main\E'$'
-[windows] stdout ^${LOCALAPPDATA@R}\Q\gobin\github.com\gobin-testrepos\simple-main\@v\v1.0.0\github.com\gobin-testrepos\simple-main\simple-main.exe\E'$'
+[linux]   stdout ^$HOME\Q/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main\E'$'
+[darwin]  stdout ^$HOME\Q/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main\E'$'
+[windows] stdout ^${LOCALAPPDATA@R}\Q\gobin\github.com\gobin-testrepos\simple-main\@v\v1.0.0\simple-main.exe\E'$'
 ! stderr .+
 
-[linux]   exec $HOME/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
-[darwin]  exec $HOME/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main
-[windows] exec $LOCALAPPDATA/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/github.com/gobin-testrepos/simple-main/simple-main.exe
+[linux]   exec $HOME/.cache/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main
+[darwin]  exec $HOME/Library/Caches/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main
+[windows] exec $LOCALAPPDATA/gobin/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main.exe
 stdout '^Simple module-based main v1.0.0$'
 ! stderr .+
