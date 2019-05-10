@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -41,6 +42,7 @@ var (
 	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
 	fNoNet    = flag.Bool("nonet", false, "prevent network access")
 	fDebug    = flag.Bool("debug", false, "print debug information")
+	fTags     = flag.String("tags", "", "build tags to apply; go help build for more information")
 )
 
 func main() {
@@ -86,6 +88,26 @@ func mainerr() error {
 		}
 		if comm > 1 {
 			return fmt.Errorf("the -run, -p, -v and -d flags are mutually exclusive")
+		}
+	}
+
+	*fTags = strings.TrimSpace(*fTags)
+	if gf := os.Getenv("GOFLAGS"); gf != "" {
+		// take the last value of -tags, if there is one
+		fvs := strings.Fields(gf)
+		for i := len(fvs) - 1; i >= 0; i-- {
+			v := fvs[i]
+			if !strings.HasPrefix(v, "-tags=") {
+				continue
+			}
+			v = strings.TrimPrefix(v, "-tags=")
+			if v != "" {
+				if *fTags != "" {
+					v += " " + *fTags
+				}
+				*fTags = v
+			}
+			break
 		}
 	}
 
@@ -319,6 +341,16 @@ func mainerr() error {
 
 			gobin := filepath.Join(gobinCache, mainrel)
 
+			// If we have non-zero -tags then we need to hash the path
+			if *fTags != "" {
+				// TODO we could get smart about building a sorted, uniq list of build constraints
+				// but for now let's just be stupid
+				h := sha256.New()
+				fmt.Fprintln(h, mainrel)
+				fmt.Fprintln(h, *fTags)
+				gobin = filepath.Join(gobinCache, fmt.Sprintf("%x", h.Sum(nil)))
+			}
+
 			var base string
 			if mp.Module.Path == mp.ImportPath {
 				pref, _, ok := module.SplitPathVersion(mp.ImportPath)
@@ -343,7 +375,11 @@ func mainerr() error {
 
 			var stdout bytes.Buffer
 
-			installCmd := goCommand("install", mp.ImportPath)
+			installCmd := goCommand("install")
+			if *fTags != "" {
+				installCmd.Args = append(installCmd.Args, "-tags", *fTags)
+			}
+			installCmd.Args = append(installCmd.Args, mp.ImportPath)
 			installCmd.Dir = pkg.wd
 			installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
 			installCmd.Stdout = &stdout

@@ -1,8 +1,23 @@
 cd repo
+
+# no -tags
 gobin -m -p github.com/gobin-testrepos/simple-main
 stdout ^${WORK@R}[/\\]repo[/\\].gobincache[/\\]github.com[/\\]gobin-testrepos[/\\]simple-main[/\\]@v[/\\]v1.0.0[/\\]simple-main$exe'$'
 ! stderr .+
 
+# with -tags
+gobin -m -tags blah -p github.com/gobin-testrepos/simple-main
+stdout ^${WORK@R}[/\\]repo[/\\].gobincache[/\\][0-9a-f]{64}[/\\]simple-main$exe'$'
+! stderr .+
+
+# with GOFLAGS=-tags set
+env GOFLAGS=-tags=blah
+gobin -m -tags blah -p github.com/gobin-testrepos/simple-main
+stdout ^${WORK@R}[/\\]repo[/\\].gobincache[/\\][0-9a-f]{64}[/\\]simple-main$exe'$'
+! stderr .+
+env GOFLAGS=
+
+# run as a check
 exec $WORK/repo/.gobincache/github.com/gobin-testrepos/simple-main/@v/v1.0.0/simple-main$exe
 stdout '^Simple module-based main v1.0.0$'
 ! stderr .+
