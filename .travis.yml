@@ -22,6 +22,7 @@ matrix:
 env:
   global:
     - GO111MODULE=on
+    - GOPROXY=https://proxy.golang.org
 
 go_import_path: github.com/myitcv/gobin
 
