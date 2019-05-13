@@ -43,6 +43,9 @@ var (
 	fNoNet    = flag.Bool("nonet", false, "prevent network access")
 	fDebug    = flag.Bool("debug", false, "print debug information")
 	fTags     = flag.String("tags", "", "build tags to apply; go help build for more information")
+
+	// envGOFLAGS is the value of GOENV passed to gobin with -tags= values stripped out
+	envGOFLAGS string
 )
 
 func main() {
@@ -66,6 +69,21 @@ func main1() int {
 }
 
 func mainerr() error {
+	// Set the default value of the -tags value to be the last -tags= value in
+	// GOFLAGS. Also, strip any -tags= values from GOFLAGS to ensure a "clean"
+	// value that can then be used for any cmd/go calls.
+	if gf := os.Getenv("GOFLAGS"); gf != "" {
+		var goenvVals []string
+		for _, v := range strings.Fields(gf) {
+			if strings.HasPrefix(v, "-tags=") {
+				*fTags = strings.TrimPrefix(v, "-tags=")
+				continue
+			}
+			goenvVals = append(goenvVals, v)
+		}
+		envGOFLAGS = strings.Join(goenvVals, " ")
+	}
+
 	flag.Usage = func() {
 		mainUsage(os.Stderr)
 	}
@@ -92,24 +110,6 @@ func mainerr() error {
 	}
 
 	*fTags = strings.TrimSpace(*fTags)
-	if gf := os.Getenv("GOFLAGS"); gf != "" {
-		// take the last value of -tags, if there is one
-		fvs := strings.Fields(gf)
-		for i := len(fvs) - 1; i >= 0; i-- {
-			v := fvs[i]
-			if !strings.HasPrefix(v, "-tags=") {
-				continue
-			}
-			v = strings.TrimPrefix(v, "-tags=")
-			if v != "" {
-				if *fTags != "" {
-					v += " " + *fTags
-				}
-				*fTags = v
-			}
-			break
-		}
-	}
 
 	if *fMod != "" {
 		switch *fMod {
@@ -628,7 +628,7 @@ func buildEnv(proxy string) []string {
 	if proxy != "" {
 		env = append(env, proxy)
 	}
-	goflags := os.Getenv("GOFLAGS")
+	goflags := envGOFLAGS
 	if *fMainMod && *fMod != "" {
 		goflags += " -mod=" + *fMod
 	}

@@ -1,0 +1,34 @@
+# Test that we have correct precedence handling of GOFLAGS and -tags
+gobin -m -run .
+stdout '^Not blah$'
+gobin -m -run -tags blah .
+stdout '^Blah$'
+env GOFLAGS=-tags=blah
+gobin -m -run .
+stdout '^Blah$'
+gobin -m -run -tags '' .
+stdout '^Not blah$'
+
+-- go.mod --
+module mod.com
+
+-- not_blah.go --
+// +build !blah
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Not blah")
+}
+-- blah.go --
+// +build blah
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Blah")
+}
