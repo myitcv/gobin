@@ -1,0 +1,7 @@
+# Verify that directory-target replace statements in the main package's module
+# are ignored.
+
+env HOME=$WORK/home
+gobin -run github.com/gobin-testrepos/simple-main-directory-replace@v1.0.0
+stdout '^Simple module-based main v1.0.0$'
+stdout '^Today we will eat fish$'
