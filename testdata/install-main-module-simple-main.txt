@@ -1,7 +1,12 @@
+# Test that gobin -m works for various permutations of GOPATH and GOBIN being set
+
 cd repo
+
+# By "resetting" the go.mod below we are ensuring that the go command has work to do, i.e. the get is not already satisfied.
 
 # No GOPATH
 env GOPATH=
+cp go.mod.orig go.mod
 gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
 [!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${HOME@R}\Q/go/bin/simple-main\E'$'
 [windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${HOME@R}\Q\go\bin\simple-main.exe\E'$'
@@ -10,6 +15,7 @@ exists $HOME/go/bin/simple-main$exe
 
 # GOPATH set
 env GOPATH=$WORK/asdf
+cp go.mod.orig go.mod
 gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
 [!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/asdf/bin/simple-main\E'$'
 [windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\asdf\bin\simple-main.exe\E'$'
@@ -19,11 +25,12 @@ exists $WORK/asdf/bin/simple-main$exe
 # GOBIN set
 mkdir bin
 env GOBIN=$WORK/repo/bin
+cp go.mod.orig go.mod
 gobin -m github.com/gobin-testrepos/simple-main@v1.0.0
 [!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/repo/bin/simple-main\E'$'
 [windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\repo\bin\simple-main.exe\E'$'
 ! stderr .+
 exists $WORK/repo/bin/simple-main$exe
 
--- repo/go.mod --
+-- repo/go.mod.orig --
 module example.com/repo

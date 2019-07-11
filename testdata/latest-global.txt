@@ -5,10 +5,10 @@ gobin github.com/gobin-testrepos/simple-main@v1.0.0
 ! stderr .+
 
 # Verify we get that same version back via latest...
-# and that we _don't_ hit the network at all.
+# without having to hit the network
 env PREVGOPROXY=$GOPROXY
-env GOPROXY=asdf
-gobin github.com/gobin-testrepos/simple-main@latest
+env GOPROXY=
+gobin -nonet github.com/gobin-testrepos/simple-main@latest
 [!windows] stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q/gopath/bin/simple-main\E'$'
 [windows]  stdout '^\QInstalled github.com/gobin-testrepos/simple-main@v1.0.0 to \E'${WORK@R}\Q\gopath\bin\simple-main.exe\E'$'
 ! stderr .+
