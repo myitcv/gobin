@@ -57,6 +57,7 @@ func TestExitCode(t *testing.T) {
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, homeEnv(temp)...)
 	cmd.Env = append(cmd.Env,
+		"GONOSUMDB=*",
 		"GOPROXY="+proxyURL,
 		"TESTSCRIPT_COMMAND=gobin",
 	)
@@ -125,6 +126,7 @@ func TestScripts(t *testing.T) {
 			e.Vars = append(e.Vars,
 				"TESTGOPATH="+modTestGOPATH,
 				"GOBINMODPATH="+pathToMod,
+				"GONOSUMDB=*",
 				"GOPROXY="+proxyURL,
 				"USERCACHEDIR="+ucd,
 			)

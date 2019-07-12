@@ -41,7 +41,7 @@ var (
 	fDownload = flag.Bool("d", false, "stop after installing main packages to the gobin install cache")
 	fUpgrade  = flag.Bool("u", false, "check for the latest tagged version of main packages")
 	fNoNet    = flag.Bool("nonet", false, "prevent network access")
-	fDebug    = flag.Bool("debug", false, "print debug information")
+	fDebug    = flag.Bool("debug", debug, "print debug information")
 	fTags     = flag.String("tags", "", "build tags to apply; go help build for more information")
 
 	// envGOFLAGS is the value of GOENV passed to gobin with -tags= values stripped out
@@ -69,12 +69,16 @@ func main1() int {
 }
 
 func mainerr() error {
+	goenv, err := getGoEnv()
+	if err != nil {
+		return err
+	}
 	// Set the default value of the -tags value to be the last -tags= value in
 	// GOFLAGS. Also, strip any -tags= values from GOFLAGS to ensure a "clean"
 	// value that can then be used for any cmd/go calls.
-	if gf := os.Getenv("GOFLAGS"); gf != "" {
+	if goenv.GOFLAGS != "" {
 		var goenvVals []string
-		for _, v := range strings.Fields(gf) {
+		for _, v := range strings.Fields(goenv.GOFLAGS) {
 			if strings.HasPrefix(v, "-tags=") {
 				*fTags = strings.TrimPrefix(v, "-tags=")
 				continue
@@ -135,7 +139,7 @@ func mainerr() error {
 
 	// cache path discovery
 	{
-		gopath = os.Getenv("GOPATH")
+		gopath = goenv.GOPATH
 		if gopath != "" {
 			gopath = filepath.SplitList(gopath)[0]
 		} else {
@@ -145,10 +149,15 @@ func mainerr() error {
 			}
 			gopath = filepath.Join(uhd, "go")
 		}
-
 		// TODO I don't think the module cache path is advertised anywhere public...
 		// intentionally but in case it is, replace what follows
-		localCacheProxy = "GOPROXY=file://" + path.Join(filepath.ToSlash(gopath), "pkg", "mod", "cache", "download")
+		cachePath := path.Join(filepath.ToSlash(gopath), "pkg", "mod", "cache", "download")
+		if goenv.ReleaseTags["go1.13"] && cachePath[0] != '/' {
+			// in Go 1.13 the handling of file:// proxy URLs changed to require a /
+			cachePath = "/" + cachePath
+		}
+
+		localCacheProxy = "GOPROXY=file://" + cachePath
 
 		if *fMainMod {
 			md := cwd
@@ -271,7 +280,7 @@ func mainerr() error {
 
 	// network resolution step
 	for _, pkg := range netPkgs {
-		proxy := os.Getenv("GOPROXY")
+		proxy := goenv.GOPROXY
 		if proxy != "" {
 			proxy = "GOPROXY=" + proxy
 		}
@@ -669,7 +678,7 @@ func (cmd *goCmd) run() error {
 
 	end := time.Now()
 
-	if !debug && !*fDebug {
+	if !*fDebug {
 		return nil
 	}
 
@@ -682,4 +691,38 @@ func (cmd *goCmd) run() error {
 	fmt.Fprintf(os.Stderr, "+ cd %v; %v %v # took %v\n%s", cmd.Dir, strings.Join(goenv, " "), strings.Join(cmd.Args, " "), end.Sub(start), stderr.String())
 
 	return nil
+}
+
+type goEnv struct {
+	ReleaseTags map[string]bool
+	GOFLAGS     string
+	GOPATH      string
+	GOPROXY     string
+	GOBIN       string
+}
+
+func getGoEnv() (goEnv, error) {
+	var res goEnv
+	{
+		cmd := exec.Command("go", "env", "-json")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return goEnv{}, fmt.Errorf("failed to get go env: %v\n%s", err, out)
+		}
+		if err := json.Unmarshal(out, &res); err != nil {
+			return goEnv{}, fmt.Errorf("failed to unmarshal go env: %v (output was %q)", err, out)
+		}
+	}
+	{
+		cmd := exec.Command("go", "list", `-f={{join context.ReleaseTags "\n"}}`, "runtime")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return goEnv{}, fmt.Errorf("failed to get release tags: %v\n%s", err, out)
+		}
+		res.ReleaseTags = make(map[string]bool)
+		for _, t := range strings.Fields(string(out)) {
+			res.ReleaseTags[t] = true
+		}
+	}
+	return res, nil
 }

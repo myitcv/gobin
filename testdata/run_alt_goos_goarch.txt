@@ -1,7 +1,11 @@
-env GOOS=rubbish
-env GOARCH=myarch
+# Test that the value of GOOS and GOARCH does not affect -run
+
+# Set values that we will never test with
+env GOOS=solaris
+env GOARCH=amd64
+
 gobin -m -run mod.com/p
-stdout '^GOOS is rubbish, GOARCH is myarch$'
+stdout '^GOOS is solaris, GOARCH is amd64$'
 
 -- go.mod --
 module mod.com

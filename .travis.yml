@@ -5,8 +5,9 @@ cache:
   - $GOPATH/pkg/mod/cache
 
 go:
-  - "1.11.x"
-  - "1.12.x"
+  - "1.11.12"
+  - "1.12.7"
+  - "1.13beta1"
 
 os:
   - linux
@@ -59,6 +60,11 @@ script:
     #
     # - go run github.com/myitcv/gobin -m -run myitcv.io/cmd/mdreplace -long -online -w README.md
     # - gobin -m -run myitcv.io/cmd/mdreplace -w README.md
+
+    # Go 1.13 fixed the sorting of vendor/modules.txt. However, this breaks our
+    # check on prior versions of Go that are in the build matrix. Hence, apply
+    # known diffs to satisfy the git status check.
+  - ./_scripts/apply_known_diffs.sh
 
   - if [[ -n $CHECK_GOFMT ]]; then diff <(echo -n) <(gofmt -d .); fi
   - test -z "$(git status --porcelain)" || (git status; git diff; false)
