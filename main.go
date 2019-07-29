@@ -474,6 +474,19 @@ type listPkg struct {
 	}
 }
 
+type modEditModule struct {
+	Path    string
+	Version string
+}
+
+type modEdit struct {
+	Module  modEditModule
+	Replace []struct {
+		Old modEditModule
+		New modEditModule
+	}
+}
+
 // arg is a wrapper around a command line-provided package
 type arg struct {
 	patt     string     // the command line-provided pattern
@@ -608,6 +621,43 @@ func (a *arg) list(proxy string) error {
 
 			if err := gmeCmd.run(); err != nil {
 				return err
+			}
+
+			// now we need to drop all the replacements for which the RHS value does
+			// not include a version... because these are directory replacements
+			{
+				var out bytes.Buffer
+				gmeCmd := goCommand("mod", "edit", "-json")
+				gmeCmd.Dir = a.wd
+				gmeCmd.Stdout = &out
+				gmeCmd.Env = buildEnv("")
+				if err := gmeCmd.run(); err != nil {
+					return err
+				}
+				var mod modEdit
+				if err := json.Unmarshal(out.Bytes(), &mod); err != nil {
+					return fmt.Errorf("failed to process output of %v: %v\n%s", strings.Join(gmeCmd.Args, " "), err, out.Bytes())
+				}
+				var todrop []string
+				for _, r := range mod.Replace {
+					if r.New.Version != "" {
+						continue
+					}
+					drop := r.Old.Path
+					if r.Old.Version != "" {
+						drop += "@" + r.Old.Version
+					}
+					todrop = append(todrop, "-dropreplace="+drop)
+				}
+				if len(todrop) > 0 {
+					gmeCmd := goCommand("mod", "edit")
+					gmeCmd.Args = append(gmeCmd.Args, todrop...)
+					gmeCmd.Dir = a.wd
+					gmeCmd.Env = buildEnv("")
+					if err := gmeCmd.run(); err != nil {
+						return err
+					}
+				}
 			}
 
 			// now that we effectively have a copy of everything relevant in the

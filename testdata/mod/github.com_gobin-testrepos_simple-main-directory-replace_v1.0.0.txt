@@ -1,0 +1,27 @@
+-- .mod --
+module github.com/gobin-testrepos/simple-main-directory-replace
+
+require github.com/gobin-testrepos/food v1.0.0
+
+replace github.com/gobin-testrepos/food => /road/to/nowhere
+-- .info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- go.mod --
+module github.com/gobin-testrepos/simple-main-directory-replace
+
+require github.com/gobin-testrepos/food v1.0.0
+
+replace github.com/gobin-testrepos/food => /road/to/nowhere
+
+-- main.go --
+package main
+
+import "fmt"
+
+import "github.com/gobin-testrepos/food"
+
+func main() {
+	fmt.Println("Simple module-based main v1.0.0")
+	fmt.Printf("Today we will eat %v\n", food.MainCourse)
+}
