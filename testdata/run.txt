@@ -4,7 +4,7 @@
 # attached
 stdin input
 gobin -m -run example.com/blah
-cmp stdout output.golden
+cmpenv stdout output.golden
 
 -- go.mod --
 module example.com/blah
@@ -27,5 +27,5 @@ func main() {
 -- input --
 This is stdin
 -- output.golden --
-blah
+blah$exe
 This is stdin

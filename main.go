@@ -360,21 +360,9 @@ func mainerr() error {
 				gobin = filepath.Join(gobinCache, fmt.Sprintf("%x", h.Sum(nil)))
 			}
 
-			var base string
-			if mp.Module.Path == mp.ImportPath {
-				pref, _, ok := module.SplitPathVersion(mp.ImportPath)
-				if !ok {
-					return fmt.Errorf("failed to derive non-version prefix from %v", mp.ImportPath)
-				}
-				base = path.Base(pref)
-			} else {
-				base = path.Base(mp.ImportPath)
-			}
+			// mp.Target already has .exe for Windows
+			base := filepath.Base(mp.Target)
 			target := filepath.Join(gobin, base)
-
-			if runtime.GOOS == "windows" {
-				target += ".exe"
-			}
 
 			// optimistically remove our target in case we are installing over self
 			// TODO work out what to do for Windows
@@ -406,7 +394,7 @@ func mainerr() error {
 				fmt.Printf("%v %v\n", mp.Module.Path, mp.Module.Version)
 			case *fRun:
 				run := exec.Command(target, runArgs...)
-				run.Args[0] = path.Base(mp.ImportPath)
+				run.Args[0] = filepath.Base(mp.Target)
 				run.Stdin = os.Stdin
 				run.Stdout = os.Stdout
 				run.Stderr = os.Stderr
@@ -430,12 +418,8 @@ func mainerr() error {
 					return fmt.Errorf("failed to open %v: %v", target, err)
 				}
 				defer src.Close()
-				bin := filepath.Join(installBin, path.Base(mp.ImportPath))
 
-				if runtime.GOOS == "windows" {
-					bin += ".exe"
-				}
-
+				bin := filepath.Join(installBin, filepath.Base(mp.Target))
 				openMode := os.O_CREATE | os.O_WRONLY
 
 				// optimistically remove our target in case we are installing over self
@@ -466,6 +450,7 @@ type listPkg struct {
 	ImportPath string
 	Name       string
 	Dir        string
+	Target     string
 	Module     struct {
 		Path    string
 		Dir     string
