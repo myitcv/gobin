@@ -2,6 +2,10 @@
 # at the end of the main package path that we end up with
 # the right binary name
 
+gobin example.com/good/v2
+stdout '^Installed example\.com/good/v2@v2\.0\.0 to '${WORK@R}'[/\\]gopath[/\\]bin[/\\]good'$exe$
+! stderr .+
+
 gobin -p example.com/good/v2
 stdout [/\\]good$exe$
 ! stderr .+

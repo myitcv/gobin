@@ -17,7 +17,7 @@ os:
 matrix:
   include:
     - os: linux
-      go: "1.11.x"
+      go: "1.13beta1"
       env: CHECK_GOFMT=1
 
 env:
