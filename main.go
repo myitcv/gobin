@@ -364,25 +364,30 @@ func mainerr() error {
 			base := filepath.Base(mp.Target)
 			target := filepath.Join(gobin, base)
 
-			// optimistically remove our target in case we are installing over self
-			// TODO work out what to do for Windows
-			if mp.ImportPath == "github.com/myitcv/gobin" {
-				_ = os.Remove(target)
-			}
-
-			var stdout bytes.Buffer
-
-			installCmd := goCommand("install")
-			if *fTags != "" {
-				installCmd.Args = append(installCmd.Args, "-tags", *fTags)
-			}
-			installCmd.Args = append(installCmd.Args, mp.ImportPath)
-			installCmd.Dir = pkg.wd
-			installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
-			installCmd.Stdout = &stdout
-
-			if err := installCmd.run(); err != nil {
-				return err
+			// Only install if the target (within the gobin cache) does not
+			// exist. For now this cache is not read-only so this isn't as
+			// safe as it could/should be, but people shouldn't be messing with
+			// the cache anyway. The target in the cache is already hash by
+			// build tags so we should never have "overlapping" gobin runs.
+			if _, err := os.Stat(target); err != nil {
+				if !os.IsNotExist(err) {
+					return fmt.Errorf("failed to read %v: %v", target, err)
+				}
+				// optimistically remove our target in case we are installing over self
+				// TODO work out what to do for Windows
+				if mp.ImportPath == "github.com/myitcv/gobin" {
+					_ = os.Remove(target)
+				}
+				installCmd := goCommand("install")
+				if *fTags != "" {
+					installCmd.Args = append(installCmd.Args, "-tags", *fTags)
+				}
+				installCmd.Args = append(installCmd.Args, mp.ImportPath)
+				installCmd.Dir = pkg.wd
+				installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
+				if err := installCmd.run(); err != nil {
+					return err
+				}
 			}
 
 			switch {
@@ -511,7 +516,7 @@ func (a *arg) list(proxy string) error {
 
 	var stdout bytes.Buffer
 
-	listCmd := goCommand("list", "-json", a.pkgPatt)
+	listCmd := goCommand("list", "-find", "-json", a.pkgPatt)
 	listCmd.Dir = a.wd
 	listCmd.Stdout = &stdout
 	listCmd.Env = env
@@ -649,7 +654,7 @@ func (a *arg) list(proxy string) error {
 			// target module (including replace directives), list to ensure they
 			// have been resolved
 
-			listCmd := goCommand("list", "-json", pkg.ImportPath)
+			listCmd := goCommand("list", "-find", "-json", pkg.ImportPath)
 			listCmd.Dir = a.wd
 			listCmd.Env = buildEnv(proxy)
 

@@ -5,9 +5,13 @@ cache:
   - $GOPATH/pkg/mod/cache
 
 go:
-  - "1.11.12"
-  - "1.12.7"
+  - "1.11.13"
+  - "1.12.9"
   - "1.13beta1"
+
+branches:
+  only:
+    - master
 
 os:
   - linux
