@@ -369,10 +369,27 @@ func mainerr() error {
 			// safe as it could/should be, but people shouldn't be messing with
 			// the cache anyway. The target in the cache is already hash by
 			// build tags so we should never have "overlapping" gobin runs.
-			if _, err := os.Stat(target); err != nil {
-				if !os.IsNotExist(err) {
-					return fmt.Errorf("failed to read %v: %v", target, err)
+			//
+			// Always install if we are in -m mode, because the main module is
+			// responsible for resolving versions. We therefore utilise the
+			// install step to effectively ensure the target binary is up to date.
+			// This logic would change if were to adopt
+			// https://github.com/myitcv/gobin/issues/81 because we would then
+			// only install non-versioned module packages (i.e. non-main module,
+			// non-directory replaced), or in the case a versioned target does not
+			// exist in the gobin cache.
+			var install bool
+			if *fMainMod {
+				install = true
+			} else {
+				if _, err := os.Stat(target); err != nil {
+					if !os.IsNotExist(err) {
+						return fmt.Errorf("failed to read %v: %v", target, err)
+					}
+					install = true
 				}
+			}
+			if install {
 				// optimistically remove our target in case we are installing over self
 				// TODO work out what to do for Windows
 				if mp.ImportPath == "github.com/myitcv/gobin" {
