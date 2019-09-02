@@ -1,0 +1,36 @@
+# Specifically test the logic that ensures -m packages are always
+# installed. Per the code comment, we always install as a means of
+# establishing whether the target is current. If we instead chose
+# to perform these checks ourself, we'd do just the same amount of
+# work.
+
+# Before
+cp msg.go.before msg.go
+gobin -m -run .
+stdout ^before$
+! stderr .+
+
+# After
+cp msg.go.after msg.go
+gobin -m -run .
+stdout ^after$
+! stderr .+
+
+-- go.mod --
+module mod.com
+-- main.go --
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(msg)
+}
+-- msg.go.before --
+package main
+
+var msg = "before"
+-- msg.go.after --
+package main
+
+var msg = "after"
