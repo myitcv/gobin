@@ -7,7 +7,7 @@ cache:
 go:
   - "1.11.13"
   - "1.12.9"
-  - "1.13beta1"
+  - "1.13rc2"
 
 branches:
   only:
@@ -21,7 +21,7 @@ os:
 matrix:
   include:
     - os: linux
-      go: "1.13beta1"
+      go: "1.13rc2"
       env: CHECK_GOFMT=1
 
 env:
