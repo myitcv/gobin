@@ -157,7 +157,7 @@ func mainerr() error {
 			cachePath = "/" + cachePath
 		}
 
-		localCacheProxy = "GOPROXY=file://" + cachePath
+		// localCacheProxy = "GOPROXY=file://" + cachePath
 
 		if *fMainMod {
 			md := cwd
