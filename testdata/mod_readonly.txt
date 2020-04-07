@@ -8,7 +8,8 @@ cd repo
 ! stdout .+
 [go1.11] [!go1.12] stderr 'import lookup disabled by -mod=readonly'
 [go1.12] [!go1.13] stderr 'can''t load package: package github.com/gobin-testrepos/simple-main: unknown import path "github.com/gobin-testrepos/simple-main": import lookup disabled by -mod=readonly'
-[go1.13] stderr 'can''t load package: package github\.com/gobin-testrepos/simple-main: import lookup disabled by -mod=readonly'
+[go1.13] [!go1.14] stderr 'updates to go.mod needed, disabled by -mod=readonly'
+[go1.14] stderr 'cannot find module providing package github\.com/gobin-testrepos/simple-main: import lookup disabled by -mod=readonly'
 
 -- repo/go.mod --
 module example.com/repo

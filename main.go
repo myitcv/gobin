@@ -771,7 +771,15 @@ func getGoEnv() (goEnv, error) {
 		}
 	}
 	{
+		// Create a temp dir that is not a module for the simple
+		// results we need from a go list of runtime
+		td, err := ioutil.TempDir("", "gobin-release-tags-")
+		if err != nil {
+			return goEnv{}, fmt.Errorf("failed to create temp dir for release tags derivation: %v", err)
+		}
+		defer os.RemoveAll(td)
 		cmd := exec.Command("go", "list", `-f={{join context.ReleaseTags "\n"}}`, "runtime")
+		cmd.Dir = td
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return goEnv{}, fmt.Errorf("failed to get release tags: %v\n%s", err, out)

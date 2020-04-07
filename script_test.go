@@ -60,9 +60,14 @@ func TestExitCode(t *testing.T) {
 		"GONOSUMDB=*",
 		"GOPROXY="+proxyURL,
 		"TESTSCRIPT_COMMAND=gobin",
+
+		// We zero GOPATH here so that we definitely use the default
+		// location of $HOME (with the new $HOME)
+		"GOPATH=",
 	)
 
-	err = cmd.Run()
+	out, err := cmd.CombinedOutput()
+	fmt.Printf(">> %s\n", out)
 	if err == nil {
 		t.Fatalf("unexpected success")
 	}
@@ -72,7 +77,7 @@ func TestExitCode(t *testing.T) {
 	}
 	want := 42
 	if got := ExitCode(ee.ProcessState); want != got {
-		t.Fatalf("expected exit code %v; got %v", want, got)
+		t.Fatalf("expected exit code %v; got %v; output was: %s", want, got, out)
 	}
 }
 
