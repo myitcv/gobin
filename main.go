@@ -401,7 +401,11 @@ func mainerr() error {
 				}
 				installCmd.Args = append(installCmd.Args, mp.ImportPath)
 				installCmd.Dir = pkg.wd
-				installCmd.Env = append(buildEnv(localCacheProxy), "GOBIN="+gobin)
+				proxy := ""
+				if *fNoNet {
+					proxy = localCacheProxy
+				}
+				installCmd.Env = append(buildEnv(proxy), "GOBIN="+gobin)
 				if err := installCmd.run(); err != nil {
 					return err
 				}
