@@ -1,0 +1,32 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  GOPROXY: https://proxy.golang.org
+
+name: Verify commit is clean
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [1.14.1]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@9fbc767707c286e568c92927bbf57d76b73e0892
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@01aecccf739ca6ff86c0539fbc67a7a5007bbc81
+    - run: go mod vendor
+    - run: go mod tidy
+    - name: Check git is clean
+      run: test -z "$(git status --porcelain)" || (git status; git diff; false)
+

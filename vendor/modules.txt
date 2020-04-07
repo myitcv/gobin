@@ -1,4 +1,4 @@
-# github.com/rogpeppe/go-internal v1.3.1
+# github.com/rogpeppe/go-internal v1.5.2
 github.com/rogpeppe/go-internal/cmd/txtar-addmod
 github.com/rogpeppe/go-internal/goproxytest
 github.com/rogpeppe/go-internal/gotooltest

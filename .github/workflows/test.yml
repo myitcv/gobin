@@ -1,0 +1,48 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  GOPROXY: https://proxy.golang.org
+
+# At the time of writing (2020-04-07) the default git config
+# on action runners includes core.autocrlf=true. Therefore we
+# override that below before checkout out the code.
+#
+# See also https://github.com/actions/checkout/issues/135
+
+name: Test
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [1.13.9, 1.14.1]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@9fbc767707c286e568c92927bbf57d76b73e0892
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Fix git config
+      run: git config --global core.autocrlf false
+    - run: mkdir -p gopath/src/github.com/myitcv/gobin
+    - name: Checkout code
+      uses: actions/checkout@01aecccf739ca6ff86c0539fbc67a7a5007bbc81
+      with:
+        path: gopath/src/github.com/myitcv/gobin
+    - name: Test
+      run: go test ./...
+      working-directory: gopath/src/github.com/myitcv/gobin
+    - name: Adjust GOPATH for non-module install
+      run: echo "::set-env name=GOPATH::$PWD/gopath"
+    - name: Adjust GO111MODULE for non-module install
+      run: echo "::set-env name=GO111MODULE::off"
+    - name: Non-module install test
+      run: go install
+      working-directory: gopath/src/github.com/myitcv/gobin
