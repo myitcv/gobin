@@ -5,12 +5,32 @@
 
 See the [FAQ](https://github.com/myitcv/gobin/wiki/FAQ) for more details.
 
+### `gobin` is deprecated as of Go 1.16
+
+Go 1.16 supports [`go install $pkg@$version`](https://golang.org/doc/go1.16#go-command) to install commands without
+affecting the main module. This is the default and most popular mode of operation for `gobin`.
+
+A proposal to support [`go run $pkg@$version`](https://github.com/golang/go/issues/42088) was accepted in January
+2021, and should hopefully land in Go 1.17. This will cover the `gobin -run` use case.
+
+Hence we have decided to archive this project.
+
 -->
 ### `gobin`
 
 The gobin command installs/runs main packages.
 
 See the [FAQ](https://github.com/myitcv/gobin/wiki/FAQ) for more details.
+
+### `gobin` is deprecated as of Go 1.16
+
+Go 1.16 supports [`go install $pkg@$version`](https://golang.org/doc/go1.16#go-command) to install commands without
+affecting the main module. This is the default and most popular mode of operation for `gobin`.
+
+A proposal to support [`go run $pkg@$version`](https://github.com/golang/go/issues/42088) was accepted in January
+2021, and should hopefully land in Go 1.17. This will cover the `gobin -run` use case.
+
+Hence we have decided to archive this project.
 
 <!-- END -->
 
